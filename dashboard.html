@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>m365-agent-templates — GitHub Metrics Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --orange: #d29922; --red: #f85149;
+    --purple: #bc8cff; --pink: #f778ba;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; padding: 24px; }
+  h1 { font-size: 1.6rem; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .subtitle a { color: var(--accent); text-decoration: none; }
+
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+  .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; }
+  .kpi .value { font-size: 2.4rem; font-weight: 700; line-height: 1.1; }
+  .kpi .label { color: var(--muted); font-size: 0.82rem; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .icon { font-size: 1.4rem; margin-bottom: 6px; }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+  @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+  .card h2 { font-size: 1rem; font-weight: 600; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+  .card.full { grid-column: 1 / -1; }
+
+  canvas { max-height: 280px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th { text-align: left; color: var(--muted); font-weight: 500; padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .rank { color: var(--muted); font-weight: 600; width: 30px; }
+  .path { color: var(--accent); font-family: 'SFMono-Regular', Consolas, monospace; font-size: 0.8rem; }
+  .bar-cell { width: 40%; }
+  .mini-bar { height: 8px; border-radius: 4px; background: var(--accent); opacity: 0.7; }
+
+  .footer { text-align: center; color: var(--muted); font-size: 0.78rem; margin-top: 32px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .badge { display: inline-block; background: #1f6feb22; color: var(--accent); font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; margin-left: 8px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>📊 m365-agent-templates <span class="badge">GitHub Metrics</span></h1>
+<p class="subtitle">
+  <a href="https://github.com/microsoft/m365-agent-templates" target="_blank">microsoft/m365-agent-templates</a>
+  &nbsp;·&nbsp; Last 14 days &nbsp;·&nbsp; Collected <span id="ts"></span>
+</p>
+
+<!-- KPI Cards -->
+<div class="kpi-row">
+  <div class="kpi"><div class="icon">👁️</div><div class="value" style="color:var(--accent)">146</div><div class="label">Page Views</div></div>
+  <div class="kpi"><div class="icon">👤</div><div class="value" style="color:var(--purple)">28</div><div class="label">Unique Visitors</div></div>
+  <div class="kpi"><div class="icon">📋</div><div class="value" style="color:var(--green)">58</div><div class="label">Clones</div></div>
+  <div class="kpi"><div class="icon">🧑‍💻</div><div class="value" style="color:var(--orange)">45</div><div class="label">Unique Cloners</div></div>
+</div>
+
+<!-- Charts Row 1: Views & Clones -->
+<div class="grid">
+  <div class="card">
+    <h2>👁️ Daily Page Views</h2>
+    <canvas id="viewsChart"></canvas>
+  </div>
+  <div class="card">
+    <h2>📋 Daily Clones</h2>
+    <canvas id="clonesChart"></canvas>
+  </div>
+</div>
+
+<!-- Charts Row 2: Popular Content & Referrers -->
+<div class="grid">
+  <div class="card">
+    <h2>🔥 Popular Content</h2>
+    <table>
+      <thead><tr><th class="rank">#</th><th>Path</th><th>Views</th><th>Unique</th><th class="bar-cell"></th></tr></thead>
+      <tbody id="popularBody"></tbody>
+    </table>
+  </div>
+  <div class="card">
+    <h2>🔗 Top Referrers</h2>
+    <canvas id="referrersChart"></canvas>
+  </div>
+</div>
+
+<!-- Visitors vs Views ratio -->
+<div class="grid">
+  <div class="card">
+    <h2>📈 Views vs Unique Visitors</h2>
+    <canvas id="ratioChart"></canvas>
+  </div>
+  <div class="card">
+    <h2>🧬 Clone Engagement</h2>
+    <canvas id="cloneBarChart"></canvas>
+  </div>
+</div>
+
+<div class="footer">
+  Data sourced from GitHub REST API (traffic endpoints, 14-day rolling window) · No releases published yet<br>
+  Dashboard generated by Copilot CLI 💅
+</div>
+
+<script>
+// ── Data ──
+const dates = ['Mar 27','Mar 28','Mar 29','Mar 30','Mar 31','Apr 1','Apr 2','Apr 3','Apr 4','Apr 5','Apr 6','Apr 7','Apr 8','Apr 9'];
+const views =     [0, 0, 0, 0,  9,  3,  0, 109, 0, 0,  2,  2,  2, 19];
+const viewsUniq = [0, 0, 0, 0,  6,  3,  0,  14, 0, 0,  2,  1,  2,  4];
+const clones =      [0, 0, 0, 0, 4, 15, 3, 12, 6, 7, 4, 1, 4, 2];
+const clonesUniq =  [0, 0, 0, 0, 4, 15, 3, 11, 6, 5, 4, 1, 3, 2];
+
+const popular = [
+  { path: '/', views: 48, uniq: 15 },
+  { path: '/tree/main/TEST', views: 34, uniq: 6 },
+  { path: '/graphs/traffic', views: 13, uniq: 2 },
+  { path: '/pulse', views: 10, uniq: 5 },
+  { path: '/pulls', views: 4, uniq: 4 },
+  { path: '/blob/main/TEST/README.md', views: 4, uniq: 1 },
+  { path: '/community', views: 2, uniq: 2 },
+  { path: '/graphs/commit-activity', views: 2, uniq: 2 },
+  { path: '/graphs/contributors', views: 2, uniq: 2 },
+  { path: '/issues', views: 2, uniq: 2 },
+];
+
+const referrers = [
+  { name: 'statics.teams.cdn.office.net', views: 10, uniq: 1 },
+  { name: 'teams.df.onecdn.static.microsoft', views: 8, uniq: 4 },
+  { name: 'github.com', views: 8, uniq: 2 },
+  { name: 'staticsint.teams.cdn.office.net', views: 4, uniq: 1 },
+  { name: 'repos.opensource.microsoft.com', views: 1, uniq: 1 },
+];
+
+document.getElementById('ts').textContent = new Date().toLocaleString();
+
+// ── Chart defaults ──
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica";
+
+const tooltip = { backgroundColor: '#1c2128', titleColor: '#e6edf3', bodyColor: '#e6edf3', borderColor: '#30363d', borderWidth: 1, cornerRadius: 8, padding: 10 };
+
+// ── Views Chart ──
+new Chart(document.getElementById('viewsChart'), {
+  type: 'bar',
+  data: {
+    labels: dates,
+    datasets: [
+      { label: 'Views', data: views, backgroundColor: '#58a6ff44', borderColor: '#58a6ff', borderWidth: 2, borderRadius: 4, order: 2 },
+      { label: 'Unique', data: viewsUniq, type: 'line', borderColor: '#bc8cff', backgroundColor: '#bc8cff33', pointBackgroundColor: '#bc8cff', pointRadius: 4, tension: 0.3, fill: true, order: 1 },
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip }, scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } } }
+});
+
+// ── Clones Chart ──
+new Chart(document.getElementById('clonesChart'), {
+  type: 'bar',
+  data: {
+    labels: dates,
+    datasets: [
+      { label: 'Clones', data: clones, backgroundColor: '#3fb95044', borderColor: '#3fb950', borderWidth: 2, borderRadius: 4, order: 2 },
+      { label: 'Unique', data: clonesUniq, type: 'line', borderColor: '#d29922', backgroundColor: '#d2992233', pointBackgroundColor: '#d29922', pointRadius: 4, tension: 0.3, fill: true, order: 1 },
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip }, scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } } }
+});
+
+// ── Popular Content Table ──
+const maxViews = popular[0].views;
+const tbody = document.getElementById('popularBody');
+popular.forEach((item, i) => {
+  const pct = (item.views / maxViews * 100).toFixed(0);
+  tbody.innerHTML += `<tr>
+    <td class="rank">${i + 1}</td>
+    <td class="path">${item.path}</td>
+    <td>${item.views}</td>
+    <td>${item.uniq}</td>
+    <td class="bar-cell"><div class="mini-bar" style="width:${pct}%"></div></td>
+  </tr>`;
+});
+
+// ── Referrers Horizontal Bar ──
+new Chart(document.getElementById('referrersChart'), {
+  type: 'bar',
+  data: {
+    labels: referrers.map(r => r.name.length > 28 ? r.name.slice(0, 28) + '…' : r.name),
+    datasets: [
+      { label: 'Views', data: referrers.map(r => r.views), backgroundColor: '#f778ba88', borderColor: '#f778ba', borderWidth: 1.5, borderRadius: 4 },
+      { label: 'Unique', data: referrers.map(r => r.uniq), backgroundColor: '#58a6ff88', borderColor: '#58a6ff', borderWidth: 1.5, borderRadius: 4 },
+    ]
+  },
+  options: { indexAxis: 'y', responsive: true, plugins: { legend: { position: 'bottom' }, tooltip }, scales: { x: { beginAtZero: true, grid: { color: '#21262d' } }, y: { grid: { display: false } } } }
+});
+
+// ── Views vs Unique Visitors (area) ──
+new Chart(document.getElementById('ratioChart'), {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [
+      { label: 'Views', data: views, borderColor: '#58a6ff', backgroundColor: '#58a6ff22', fill: true, tension: 0.35, pointRadius: 3 },
+      { label: 'Unique Visitors', data: viewsUniq, borderColor: '#bc8cff', backgroundColor: '#bc8cff22', fill: true, tension: 0.35, pointRadius: 3 },
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip }, scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } } }
+});
+
+// ── Clone Engagement (stacked) ──
+new Chart(document.getElementById('cloneBarChart'), {
+  type: 'bar',
+  data: {
+    labels: dates,
+    datasets: [
+      { label: 'Unique Cloners', data: clonesUniq, backgroundColor: '#3fb950', borderRadius: 4 },
+      { label: 'Repeat Clones', data: clones.map((c, i) => c - clonesUniq[i]), backgroundColor: '#3fb95044', borderRadius: 4 },
+    ]
+  },
+  options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, beginAtZero: true, grid: { color: '#21262d' } } } }
+});
+</script>
+</body>
+</html>

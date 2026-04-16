@@ -1,0 +1,1308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Telemetry Tracking — Complete Guide for CAT Team</title>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --muted: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --orange: #d29922; --red: #f85149;
+    --purple: #bc8cff; --pink: #f778ba; --teal: #39d2c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; line-height: 1.7; }
+
+  /* ── Header ── */
+  .hero {
+    background: linear-gradient(135deg, #161b22 0%, #1a1f36 50%, #0d1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 48px 32px 40px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.2rem; font-weight: 700; margin-bottom: 8px; }
+  .hero h1 span { color: var(--accent); }
+  .hero .subtitle { color: var(--muted); font-size: 1rem; max-width: 640px; margin: 0 auto 20px; }
+  .hero .meta { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; }
+  .hero .meta-item { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 0.85rem; }
+  .hero .meta-item .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* ── Layout ── */
+  .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── Nav / TOC ── */
+  .toc {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px 28px; margin-bottom: 40px;
+  }
+  .toc h2 { font-size: 1rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px; }
+  .toc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 8px; }
+  .toc a {
+    color: var(--accent); text-decoration: none; font-size: 0.92rem; padding: 6px 0;
+    display: flex; align-items: center; gap: 8px; transition: color 0.2s;
+  }
+  .toc a:hover { color: var(--purple); }
+  .toc .num { color: var(--muted); font-size: 0.78rem; min-width: 22px; }
+
+  /* ── Section ── */
+  section { margin-bottom: 48px; }
+  section h2 {
+    font-size: 1.5rem; font-weight: 700; margin-bottom: 6px;
+    padding-bottom: 10px; border-bottom: 2px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  section h3 { font-size: 1.15rem; font-weight: 600; margin: 24px 0 10px; color: var(--purple); }
+  section h4 { font-size: 1rem; font-weight: 600; margin: 18px 0 8px; color: var(--teal); }
+  p, li { font-size: 0.95rem; color: var(--text); }
+  p { margin-bottom: 14px; }
+  ul, ol { padding-left: 24px; margin-bottom: 14px; }
+  li { margin-bottom: 6px; }
+  strong { color: #fff; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ── Cards / Boxes ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px 24px; margin-bottom: 16px;
+  }
+  .card h3 { margin-top: 0; }
+
+  .info-box {
+    background: #1f6feb15; border-left: 4px solid var(--accent);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 18px;
+  }
+  .warn-box {
+    background: #d2992215; border-left: 4px solid var(--orange);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 18px;
+  }
+  .error-box {
+    background: #f8514915; border-left: 4px solid var(--red);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 18px;
+  }
+  .success-box {
+    background: #3fb95015; border-left: 4px solid var(--green);
+    padding: 14px 18px; border-radius: 0 8px 8px 0; margin-bottom: 18px;
+  }
+
+  /* ── Code ── */
+  pre {
+    background: #0d1117; border: 1px solid var(--border); border-radius: 8px;
+    padding: 16px 20px; overflow-x: auto; margin-bottom: 18px; font-size: 0.85rem;
+    line-height: 1.6;
+  }
+  code { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+  p code, li code {
+    background: #30363d; padding: 2px 6px; border-radius: 4px; font-size: 0.88em; color: var(--orange);
+  }
+
+  /* ── Tables ── */
+  table {
+    width: 100%; border-collapse: collapse; margin-bottom: 18px;
+    font-size: 0.88rem; background: var(--surface); border-radius: 8px; overflow: hidden;
+  }
+  th {
+    text-align: left; color: var(--muted); font-weight: 600; padding: 10px 14px;
+    border-bottom: 2px solid var(--border); background: #0d1117;
+  }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #1c2333; }
+
+  /* ── Architecture Diagram ── */
+  .arch-diagram {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 28px; margin: 20px 0; text-align: center;
+  }
+  .arch-flow { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px; }
+  .arch-node {
+    background: var(--bg); border: 2px solid var(--accent); border-radius: 10px;
+    padding: 12px 18px; font-size: 0.85rem; font-weight: 600; min-width: 130px; text-align: center;
+  }
+  .arch-node.kusto { border-color: var(--purple); }
+  .arch-node.fabric { border-color: var(--green); }
+  .arch-node.gh { border-color: var(--orange); }
+  .arch-node.output { border-color: var(--pink); }
+  .arch-arrow { color: var(--muted); font-size: 1.3rem; }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block; font-size: 0.72rem; padding: 3px 10px;
+    border-radius: 10px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .badge-blue { background: #1f6feb33; color: var(--accent); }
+  .badge-green { background: #3fb95033; color: var(--green); }
+  .badge-orange { background: #d2992233; color: var(--orange); }
+  .badge-purple { background: #bc8cff33; color: var(--purple); }
+  .badge-pink { background: #f778ba33; color: var(--pink); }
+
+  /* ── Collapsible ── */
+  details { margin-bottom: 12px; }
+  summary {
+    cursor: pointer; font-weight: 600; font-size: 0.95rem; padding: 10px 0;
+    color: var(--accent); list-style: none;
+  }
+  summary::before { content: "▸ "; color: var(--muted); }
+  details[open] summary::before { content: "▾ "; }
+  details .inner { padding: 12px 0 0 16px; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center; color: var(--muted); font-size: 0.78rem;
+    margin-top: 48px; padding: 24px 0; border-top: 1px solid var(--border);
+  }
+
+  /* ── Steps ── */
+  .step {
+    display: flex; gap: 16px; margin-bottom: 20px; align-items: flex-start;
+  }
+  .step-num {
+    background: var(--accent); color: #000; font-weight: 700;
+    width: 32px; height: 32px; border-radius: 50%; display: flex;
+    align-items: center; justify-content: center; flex-shrink: 0; font-size: 0.9rem;
+  }
+  .step-body { flex: 1; }
+  .step-body h4 { margin-top: 2px; color: var(--text); }
+
+  /* ── KPI Grid ── */
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .kpi {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px; text-align: center;
+  }
+  .kpi .icon { font-size: 1.3rem; margin-bottom: 4px; }
+  .kpi .value { font-size: 1.8rem; font-weight: 700; line-height: 1.2; }
+  .kpi .label { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ HERO ═══════════ -->
+<div class="hero">
+  <h1>📊 <span>GitHub Telemetry</span> Tracking Guide</h1>
+  <p class="subtitle">Everything the CAT team needs to track GitHub repo health, adoption metrics, and the full telemetry ecosystem for <code>microsoft/m365-agent-templates</code></p>
+  <div class="meta">
+    <div class="meta-item"><div class="dot" style="background:var(--green)"></div> Last updated: April 2026</div>
+    <div class="meta-item"><div class="dot" style="background:var(--accent)"></div> Team: Copilot Advisory Team (CAT)</div>
+    <div class="meta-item"><div class="dot" style="background:var(--purple)"></div> Author: Denise Moran</div>
+  </div>
+</div>
+
+<div class="container">
+
+<!-- ═══════════ TABLE OF CONTENTS ═══════════ -->
+<div class="toc">
+  <h2>📋 Table of Contents</h2>
+  <div class="toc-grid">
+    <a href="#overview"><span class="num">01</span> Overview — What We Track & Why</a>
+    <a href="#architecture"><span class="num">02</span> Architecture — The Full Picture</a>
+    <a href="#github-api"><span class="num">03</span> GitHub Traffic API Deep Dive</a>
+    <a href="#setup"><span class="num">04</span> Setup — Auth & Prerequisites</a>
+    <a href="#tools"><span class="num">05</span> Our Tools — Scripts & Dashboards</a>
+    <a href="#running"><span class="num">06</span> Running the Metrics Collection</a>
+    <a href="#kusto"><span class="num">07</span> Kusto Telemetry (Solution Installs)</a>
+    <a href="#fabric"><span class="num">08</span> Fabric Pipeline (Historical Trends)</a>
+    <a href="#gotchas"><span class="num">09</span> Known Gotchas & Troubleshooting</a>
+    <a href="#metrics"><span class="num">10</span> Key Metrics We Report On</a>
+    <a href="#downloads"><span class="num">10a</span> Download Tracking — The Critical Gap</a>
+    <a href="#paths"><span class="num">10b</span> Repo Path Map — What to Track</a>
+    <a href="#badges"><span class="num">11</span> View Badges for READMEs</a>
+    <a href="#appendix"><span class="num">12</span> Appendix — KQL Query Library</a>
+  </div>
+</div>
+
+<!-- ═══════════ 1. OVERVIEW ═══════════ -->
+<section id="overview">
+  <h2>🎯 01 — Overview: What We Track & Why</h2>
+
+  <p>We track <strong>adoption and usage</strong> of our agent templates across two distribution channels:</p>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="icon">🐙</div><div class="value" style="color:var(--accent)">GitHub</div><div class="label">Repo Traffic & Downloads</div></div>
+    <div class="kpi"><div class="icon">🏪</div><div class="value" style="color:var(--green)">AppSource</div><div class="label">Solution Install Telemetry</div></div>
+    <div class="kpi"><div class="icon">📊</div><div class="value" style="color:var(--purple)">Kusto</div><div class="label">Global Usage via CRMAnalytics</div></div>
+    <div class="kpi"><div class="icon">🏭</div><div class="value" style="color:var(--orange)">Fabric</div><div class="label">Historical Trend Storage</div></div>
+  </div>
+
+  <p><strong>GitHub telemetry</strong> (this guide's focus) covers the <a href="https://github.com/microsoft/m365-agent-templates">microsoft/m365-agent-templates</a> repo — our open-source home for declarative agent templates (M365 Copilot / Teams) and Copilot Studio agent templates.</p>
+
+  <div class="info-box">
+    <strong>💡 Two audiences, two channels:</strong><br>
+    <strong>GitHub</strong> = builders/contributors who want to customize templates.<br>
+    <strong>AppSource</strong> = IT admins and business users who want one-click install.
+  </div>
+
+  <h3>Agent Templates — Quick Links</h3>
+  <table>
+    <tr><th>Template</th><th>Type</th><th>GitHub Folder</th></tr>
+    <tr><td>📅 <strong>Plan My Day</strong></td><td>Declarative Agent</td><td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Plan%20My%20Day">📂 /Plan My Day</a></td></tr>
+    <tr><td>📋 <strong>My Company Policy</strong></td><td>Declarative Agent</td><td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/My%20Company%20Policy">📂 /My Company Policy</a></td></tr>
+    <tr><td>📊 <strong>Executive Briefing</strong></td><td>Declarative Agent</td><td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Executive%20Briefing">📂 /Executive Briefing</a></td></tr>
+    <tr><td>📝 <strong>Request Tracker</strong></td><td>Custom Agent (Copilot Studio)</td><td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Request%20Tracker">📂 /Request Tracker</a></td></tr>
+    <tr><td>🔍 <strong>Know My Customer</strong></td><td>Custom Agent (Copilot Studio)</td><td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Know%20My%20Customer">📂 /Know My Customer</a></td></tr>
+  </table>
+
+  <h3>What GitHub Tells Us</h3>
+  <table>
+    <tr><th>Signal</th><th>What It Measures</th><th>Business Question</th></tr>
+    <tr><td><strong>Page Views</strong></td><td>How many people visit the repo</td><td>Is our content discoverable?</td></tr>
+    <tr><td><strong>Unique Visitors</strong></td><td>Distinct individuals viewing</td><td>How wide is our reach?</td></tr>
+    <tr><td><strong>Clones</strong></td><td>People downloading the full repo</td><td>Who's actually trying to use this?</td></tr>
+    <tr><td><strong>Release Downloads</strong></td><td>ZIP downloads per release asset</td><td>Which templates are most popular?</td></tr>
+    <tr><td><strong>Popular Paths</strong></td><td>Most viewed files/folders</td><td>What are people looking at first?</td></tr>
+    <tr><td><strong>Referrers</strong></td><td>Where traffic comes from</td><td>Are our aka.ms links driving traffic?</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════ 2. ARCHITECTURE ═══════════ -->
+<section id="architecture">
+  <h2>🏗️ 02 — Architecture: The Full Picture</h2>
+
+  <div class="arch-diagram">
+    <p style="color:var(--muted); margin-bottom:16px; font-size:0.85rem;">Data flows from source → collection → storage → visualization</p>
+    <div class="arch-flow">
+      <div class="arch-node gh">🐙 GitHub API<br><small>Traffic + Releases</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node" style="border-color:var(--teal)">⚡ PowerShell Script<br><small>m365-agent-templates-metrics.ps1</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node output">🖥️ Terminal Dashboard<br><small>Live CLI output</small></div>
+    </div>
+    <div style="margin:16px 0; color:var(--muted)">— AND —</div>
+    <div class="arch-flow">
+      <div class="arch-node gh">🐙 GitHub API</div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node fabric">🏭 Fabric Notebook<br><small>AgentTemplatesMetrics.ipynb</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node fabric">🗄️ Delta Lakehouse<br><small>Historical tables</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node output">📊 Power BI Report<br><small>Trend analysis</small></div>
+    </div>
+    <div style="margin:16px 0; color:var(--muted)">— PLUS —</div>
+    <div class="arch-flow">
+      <div class="arch-node kusto">🔍 Kusto (CRMAnalytics)<br><small>11 global clusters</small></div>
+      <div class="arch-arrow">→</div>
+      <div class="arch-node kusto">📋 ADX Dashboard<br><small>6 pages, auto-refresh</small></div>
+    </div>
+  </div>
+
+  <div class="info-box">
+    <strong>Key insight:</strong> GitHub traffic data only retains <strong>14 days</strong>. That's why we built the Fabric pipeline — to collect and store historical data before it rolls off.
+  </div>
+</section>
+
+<!-- ═══════════ 3. GITHUB API DEEP DIVE ═══════════ -->
+<section id="github-api">
+  <h2>🔌 03 — GitHub Traffic API Deep Dive</h2>
+
+  <p>All data comes from the <a href="https://docs.github.com/en/rest/metrics/traffic">GitHub REST API v3 Traffic endpoints</a>. These are the specific endpoints we use:</p>
+
+  <table>
+    <tr><th>Endpoint</th><th>Data Returned</th><th>Retention</th></tr>
+    <tr>
+      <td><code>GET /repos/{owner}/{repo}/releases</code></td>
+      <td>Asset download counts per release</td>
+      <td>Cumulative (all-time) ✅</td>
+    </tr>
+    <tr>
+      <td><code>GET /repos/{owner}/{repo}/traffic/views</code></td>
+      <td>Daily page views + unique visitors</td>
+      <td>Rolling 14 days ⚠️</td>
+    </tr>
+    <tr>
+      <td><code>GET /repos/{owner}/{repo}/traffic/clones</code></td>
+      <td>Daily clones + unique cloners</td>
+      <td>Rolling 14 days ⚠️</td>
+    </tr>
+    <tr>
+      <td><code>GET /repos/{owner}/{repo}/traffic/popular/paths</code></td>
+      <td>Top 10 most-viewed paths</td>
+      <td>Rolling 14 days ⚠️</td>
+    </tr>
+    <tr>
+      <td><code>GET /repos/{owner}/{repo}/traffic/popular/referrers</code></td>
+      <td>Top referral sources</td>
+      <td>Rolling 14 days ⚠️</td>
+    </tr>
+  </table>
+
+  <h3>API Response Examples</h3>
+
+  <details>
+    <summary>📄 Views Response</summary>
+    <div class="inner">
+<pre><code>{
+  "count": 146,
+  "uniques": 28,
+  "views": [
+    { "timestamp": "2026-04-03T00:00:00Z", "count": 109, "uniques": 14 },
+    { "timestamp": "2026-04-04T00:00:00Z", "count": 12, "uniques": 5 },
+    ...
+  ]
+}</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>📄 Clones Response</summary>
+    <div class="inner">
+<pre><code>{
+  "count": 58,
+  "uniques": 45,
+  "clones": [
+    { "timestamp": "2026-04-03T00:00:00Z", "count": 8, "uniques": 6 },
+    ...
+  ]
+}</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>📄 Release Downloads Response</summary>
+    <div class="inner">
+<pre><code>[
+  {
+    "tag_name": "daily-planner-v1.0.0",
+    "name": "Daily Planner v1.0.0",
+    "published_at": "2026-04-10T...",
+    "assets": [
+      {
+        "name": "AgentLib_DailyPlanner_1_0_0_0.zip",
+        "download_count": 42,
+        "size": 1048576
+      }
+    ]
+  }
+]</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>📄 Popular Paths Response</summary>
+    <div class="inner">
+<pre><code>[
+  { "path": "/microsoft/m365-agent-templates", "title": "m365-agent-templates", "count": 80, "uniques": 20 },
+  { "path": "/microsoft/m365-agent-templates/tree/main/templates", "title": "templates", "count": 22, "uniques": 8 },
+  ...
+]</code></pre>
+    </div>
+  </details>
+
+  <details>
+    <summary>📄 Referrers Response</summary>
+    <div class="inner">
+<pre><code>[
+  { "referrer": "statics.teams.cdn.office.net", "count": 10, "uniques": 4 },
+  { "referrer": "github.com", "count": 45, "uniques": 12 },
+  ...
+]</code></pre>
+    </div>
+  </details>
+</section>
+
+<!-- ═══════════ 4. SETUP ═══════════ -->
+<section id="setup">
+  <h2>🔧 04 — Setup: Auth & Prerequisites</h2>
+
+  <div class="error-box">
+    <strong>⚠️ Critical:</strong> Traffic API endpoints require <strong>push access</strong> to the repo. Read-only tokens will get a <code>403 Forbidden</code>. This means you need either:
+    <ul style="margin-top:8px;margin-bottom:0">
+      <li>A GitHub PAT (classic) with <code>repo</code> scope</li>
+      <li>OR: Be logged into <code>gh</code> CLI with an account that has push access</li>
+    </ul>
+  </div>
+
+  <h3>Option A: GitHub CLI (Recommended)</h3>
+  <p>If you're logged into the <code>gh</code> CLI with push access to the repo:</p>
+<pre><code># Check current auth
+gh auth status
+
+# If you need to switch accounts:
+gh auth switch --user denise-msft
+
+# Set the token for scripts:
+$env:GITHUB_TOKEN = (gh auth token)</code></pre>
+
+  <h3>Option B: Personal Access Token (PAT)</h3>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Create a Classic PAT</h4>
+      <p>Go to <a href="https://github.com/settings/tokens">github.com/settings/tokens</a> → <strong>Generate new token (classic)</strong></p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Select the <code>repo</code> scope</h4>
+      <p>This grants push-level access needed for traffic endpoints. The <code>repo</code> scope includes <code>repo:status</code>, <code>repo_deployment</code>, <code>public_repo</code>, and <code>repo:invite</code>.</p>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Set the environment variable</h4>
+<pre><code># PowerShell (session)
+$env:GITHUB_TOKEN = "ghp_your_token_here"
+
+# Or add to your profile for persistence:
+# Add to $PROFILE: $env:GITHUB_TOKEN = "ghp_..."</code></pre>
+    </div>
+  </div>
+
+  <div class="warn-box">
+    <strong>🔑 PAT vs OAuth:</strong> <code>gh auth token</code> returns an OAuth token that may lack <code>repo</code> scope. If traffic endpoints return 403, create a classic PAT with explicit <code>repo</code> scope instead.
+  </div>
+
+  <h3>Prerequisites Checklist</h3>
+  <table>
+    <tr><th>Requirement</th><th>How to Get It</th><th>Verify</th></tr>
+    <tr><td>Push access to <code>microsoft/m365-agent-templates</code></td><td>Ask repo admin to add you as collaborator</td><td><code>gh api /repos/microsoft/m365-agent-templates/collaborators/{username} --silent; echo $?</code></td></tr>
+    <tr><td>GitHub CLI (<code>gh</code>)</td><td><code>winget install GitHub.cli</code></td><td><code>gh --version</code></td></tr>
+    <tr><td>PowerShell 7+</td><td><code>winget install Microsoft.PowerShell</code></td><td><code>$PSVersionTable.PSVersion</code></td></tr>
+    <tr><td>VPN (for Kusto)</td><td>Microsoft corpnet connection</td><td>Can you reach <code>fdislandswebusby2.westus.kusto.windows.net</code>?</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════ 5. OUR TOOLS ═══════════ -->
+<section id="tools">
+  <h2>🛠️ 05 — Our Tools: Scripts & Dashboards</h2>
+
+  <p>We've built four tools that work together. All live at: <code>C:\Users\demora\dev\m365-agent-templates-metrics\</code></p>
+
+  <div class="card">
+    <h3>📟 <code>m365-agent-templates-metrics.ps1</code> <span class="badge badge-blue">CLI Dashboard</span></h3>
+    <p>PowerShell script that pulls all GitHub API data and renders a colorful terminal dashboard with bar charts. Great for quick spot-checks.</p>
+    <p><strong>Output:</strong> Release download counts, 14-day page views (daily breakdown), clone stats, top 10 popular paths, top referrers.</p>
+  </div>
+
+  <div class="card">
+    <h3>🌐 <code>dashboard.html</code> <span class="badge badge-green">Static HTML</span></h3>
+    <p>Self-contained HTML file with Chart.js — dark GitHub theme, 4 KPI cards, 6 interactive charts. No server needed, just open in a browser.</p>
+    <p><strong>Charts:</strong> Views timeline, clones timeline, popular content table, referrers bar chart, views vs visitors area chart, clone engagement stacked chart.</p>
+    <p><strong>Note:</strong> Data is baked in at generation time — re-run the PS1 script to update.</p>
+  </div>
+
+  <div class="card">
+    <h3>📓 <code>AgentTemplatesMetrics.ipynb</code> <span class="badge badge-purple">Fabric Notebook</span></h3>
+    <p>Spark/Python notebook that collects the same GitHub API data but saves to <strong>Delta lakehouse tables</strong> for historical trending. This is how we keep data beyond the 14-day window.</p>
+    <p><strong>Tables created:</strong> <code>release_downloads</code>, <code>traffic_views</code>, <code>traffic_clones</code>, <code>popular_content</code>, <code>referrers</code>, <code>readme_views</code></p>
+  </div>
+
+  <div class="card">
+    <h3>🏷️ <code>m365-agent-templates-add-view-badges.ps1</code> <span class="badge badge-orange">Badge Generator</span></h3>
+    <p>Generates and inserts <a href="https://hits.sh">hits.sh</a> view-tracking badges into folder READMEs. Supports dry-run mode and auto-insert into a local clone.</p>
+    <p><strong>Visible badge example:</strong><br>
+    <code>[![Views](https://hits.sh/github.com/microsoft/m365-agent-templates.svg?label=views&color=0078D4)](...)</code></p>
+    <p><strong>Stealth badge:</strong> Uses <code>color=ffffff&labelColor=ffffff</code> for transparent tracking.</p>
+  </div>
+</section>
+
+<!-- ═══════════ 6. RUNNING ═══════════ -->
+<section id="running">
+  <h2>▶️ 06 — Running the Metrics Collection</h2>
+
+  <h3>Quick CLI Check (30 seconds)</h3>
+<pre><code># 1. Set your token
+$env:GITHUB_TOKEN = (gh auth token)
+
+# 2. Navigate to the tools directory
+cd C:\Users\demora\dev\m365-agent-templates-metrics
+
+# 3. Run the dashboard
+.\m365-agent-templates-metrics.ps1</code></pre>
+
+  <p>You'll see output like this:</p>
+<pre><code>╔══════════════════════════════════════════════════════════╗
+║  📦  RELEASE ASSET DOWNLOAD COUNTS                      ║
+╚══════════════════════════════════════════════════════════╝
+
+  🏷️  Daily Planner v1.0.0 (daily-planner-v1.0.0) — 2026-04-10
+     Release total: 42 downloads
+     📄 AgentLib_DailyPlanner_1_0_0_0.zip  →  42 downloads  (1.2 MB)
+
+╔══════════════════════════════════════════════════════════╗
+║  👁️  TRAFFIC — PAGE VIEWS (last 14 days)                ║
+╚══════════════════════════════════════════════════════════╝
+
+  Total views:  146
+  Unique visitors: 28
+
+  Daily breakdown:
+    2026-04-03    109    14 uniq  ████████████████████████████</code></pre>
+
+  <h3>Opening the HTML Dashboard</h3>
+<pre><code># Just open it in your browser:
+start C:\Users\demora\dev\m365-agent-templates-metrics\dashboard.html</code></pre>
+
+  <h3>Running the Fabric Notebook (Historical Storage)</h3>
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Open Fabric portal</h4>
+      <p>Go to <a href="https://app.fabric.microsoft.com">app.fabric.microsoft.com</a> → <strong>Power CAT Team</strong> workspace</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Find the notebook</h4>
+      <p>Open <strong>AgentTemplatesMetrics</strong> notebook</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Set GITHUB_TOKEN</h4>
+      <p>In the first cell, set your PAT token</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body">
+      <h4>Run All</h4>
+      <p>Click <strong>Run All</strong> — data will be saved to the lakehouse delta tables</p>
+    </div>
+  </div>
+
+  <div class="success-box">
+    <strong>📅 Best practice:</strong> Run the Fabric notebook <strong>at least weekly</strong> to capture traffic data before it rolls off the 14-day window. Set a recurring calendar reminder!
+  </div>
+</section>
+
+<!-- ═══════════ 7. KUSTO ═══════════ -->
+<section id="kusto">
+  <h2>🔍 07 — Kusto Telemetry (Solution Install Tracking)</h2>
+
+  <p>Beyond GitHub, we track actual <strong>solution installs</strong> and <strong>agent usage</strong> across all global Power Platform environments via Kusto.</p>
+
+  <h3>Data Sources</h3>
+  <table>
+    <tr><th>System</th><th>What It Measures</th><th>Coverage</th></tr>
+    <tr><td><strong>CRMAnalytics</strong> (Kusto)</td><td>Solution installs, org details, bot metadata</td><td>Global (11 regional clusters)</td></tr>
+    <tr><td><strong>processus</strong> (Kusto)</td><td>Power Automate flow execution</td><td>Global (NA+EU)</td></tr>
+    <tr><td><strong>PPUXAnalytics</strong> (Kusto)</td><td>Canvas app page loads = per-feature MAU</td><td>Global (13 clusters)</td></tr>
+    <tr><td><strong>padata</strong> (Kusto)</td><td>Model-driven app shell usage</td><td>US-centric</td></tr>
+  </table>
+
+  <h3>Two-Layer Agent Template Tracking</h3>
+  <div class="card">
+    <h4>Layer 1: Install Signal (Solution-Level)</h4>
+    <p>Filter: <code>SolutionUniqueName startswith "AgentLib_"</code></p>
+    <p>Tells us: Who downloaded and imported the template</p>
+    <p>Limitation: Lost if user uninstalls the original solution after moving the agent</p>
+  </div>
+  <div class="card">
+    <h4>Layer 2: Usage Signal (Schema-Level, Durable)</h4>
+    <p>Filter: Bot schema names in <code>ChatbotDetails</code> — these are <strong>immutable</strong> and persist even if the agent is moved to a different solution</p>
+    <table>
+      <tr><th>Agent Template</th><th>Solution Name</th><th>Bot Schema Name</th></tr>
+      <tr><td>Daily Planner</td><td><code>AgentLib_DailyPlanner</code></td><td><code>cat_dailyplanner</code></td></tr>
+      <tr><td>Customer Researcher</td><td><code>AgentLib_CustomerResearcher</code></td><td><code>cat_customerresearcher</code></td></tr>
+      <tr><td>Executive Insights</td><td><code>AgentLib_ExecutiveInsights</code></td><td><code>cat_executiveinsights</code></td></tr>
+      <tr><td>Company Policy Q&A</td><td><code>AgentLib_CompanyPolicyQA</code></td><td><code>cat_companypolicyqa</code></td></tr>
+      <tr><td>Request Tracker</td><td><code>AgentLib_RequestTracker</code></td><td><code>cat_requesttracker</code></td></tr>
+    </table>
+  </div>
+
+  <h3>Access Requirements</h3>
+  <table>
+    <tr><th>Entitlement</th><th>What It Unlocks</th><th>How to Get</th></tr>
+    <tr><td><strong>BIC-DataAccess-US</strong></td><td>NA CRMAnalytics cluster</td><td><a href="https://myaccess.microsoft.com">myaccess.microsoft.com</a></td></tr>
+    <tr><td><strong>BIC-DataAccess-EU</strong></td><td>EU CRMAnalytics clusters</td><td><a href="https://myaccess.microsoft.com">myaccess.microsoft.com</a></td></tr>
+  </table>
+  <p>All Kusto clusters require <strong>Microsoft corpnet (VPN)</strong>.</p>
+
+  <h3>Live ADX Dashboard</h3>
+  <p>🔗 <a href="https://dataexplorer.azure.com/dashboards/c46ae0ef-e6f2-4489-8429-8b5dc17bceba">Open ADX Dashboard</a> (6 pages, auto-refreshes every 15 min)</p>
+  <p>Pages: Executive Summary · Customer List · Component Adoption · Agent Ecosystem · Health &amp; Retention · Feature Deployment</p>
+</section>
+
+<!-- ═══════════ 8. FABRIC ═══════════ -->
+<section id="fabric">
+  <h2>🏭 08 — Fabric Pipeline (Historical Trends)</h2>
+
+  <h3>Why Fabric?</h3>
+  <p>GitHub traffic data has a <strong>14-day rolling window</strong>. After 14 days, the data is gone. Our Fabric pipeline captures this data into delta tables so we can build <strong>month-over-month trend analysis</strong>.</p>
+
+  <h3>Resources</h3>
+  <table>
+    <tr><th>Asset</th><th>Location</th></tr>
+    <tr><td>Workspace</td><td>Power CAT Team (<code>d72e0df1-f868-472b-bb8d-c58453f419b6</code>)</td></tr>
+    <tr><td>Lakehouse</td><td>ComponentLibraryTelemetry (<code>c69b5357-628c-4832-8465-00afe5f039fd</code>)</td></tr>
+    <tr><td>Notebook</td><td>TelemetryDataPipeline (<code>16dafb88-f885-4d14-a793-83be28154d85</code>)</td></tr>
+    <tr><td>Semantic Model</td><td>Telemetry Usage Report (<code>4c1c6b2c-8ad5-49df-b007-5a6cc68c9f00</code>)</td></tr>
+  </table>
+
+  <h3>Delta Tables</h3>
+  <table>
+    <tr><th>Table</th><th>Source</th><th>Description</th></tr>
+    <tr><td><code>release_downloads</code></td><td>GitHub Releases API</td><td>Download counts per release asset</td></tr>
+    <tr><td><code>traffic_views</code></td><td>GitHub Traffic API</td><td>Daily page views + unique visitors</td></tr>
+    <tr><td><code>traffic_clones</code></td><td>GitHub Traffic API</td><td>Daily clones + unique cloners</td></tr>
+    <tr><td><code>popular_content</code></td><td>GitHub Traffic API</td><td>Top 10 most-viewed paths</td></tr>
+    <tr><td><code>referrers</code></td><td>GitHub Traffic API</td><td>Top referral sources</td></tr>
+    <tr><td><code>solution_installed_base</code></td><td>CRMAnalytics Kusto</td><td>Global CSK + AgentLib solution installs</td></tr>
+    <tr><td><code>organization_details</code></td><td>CRMAnalytics Kusto</td><td>Org-to-tenant mapping with customer names</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════ 9. GOTCHAS ═══════════ -->
+<section id="gotchas">
+  <h2>⚡ 09 — Known Gotchas & Troubleshooting</h2>
+
+  <div class="error-box">
+    <strong>🚫 403 Forbidden on Traffic Endpoints</strong><br>
+    <strong>Cause:</strong> Your token lacks push access to the repo.<br>
+    <strong>Fix:</strong> Create a classic PAT with <code>repo</code> scope, OR ensure your <code>gh</code> CLI account has push access.
+  </div>
+
+  <div class="warn-box">
+    <strong>⏰ 14-Day Rolling Window</strong><br>
+    Traffic data (views, clones, paths, referrers) only covers the last 14 days. If you don't collect it, it's gone forever.<br>
+    <strong>Fix:</strong> Run the Fabric notebook weekly to persist historical data.
+  </div>
+
+  <div class="warn-box">
+    <strong>🔄 gh auth token May Lack Scope</strong><br>
+    The OAuth token from <code>gh auth token</code> may not include <code>repo</code> scope for Microsoft org repos.<br>
+    <strong>Fix:</strong> Create a classic PAT at github.com/settings/tokens with explicit <code>repo</code> scope.
+  </div>
+
+  <div class="info-box">
+    <strong>📊 Static HTML Dashboard</strong><br>
+    The <code>dashboard.html</code> has data baked in at generation time. To refresh it, re-run the PowerShell script that generates it.
+  </div>
+
+  <div class="info-box">
+    <strong>🔀 GitHub Account Switching</strong><br>
+    The default active GH account may be <code>demora_microsoft</code> (Microsoft org). For repos under <code>denise-msft</code>, run <code>gh auth switch --user denise-msft</code> first.
+  </div>
+
+  <div class="warn-box">
+    <strong>🏢 Kusto VPN Requirement</strong><br>
+    All <code>fdislands*</code> Kusto clusters require Microsoft corpnet. If queries fail, check your VPN connection.
+  </div>
+
+  <div class="warn-box">
+    <strong>🔐 Code Apps CSP Blocks Direct Telemetry</strong><br>
+    The Managed Host iframe enforces <code>connect-src 'none'</code> — you cannot send telemetry directly from a Code App to 1DS/Aria. Must route through Dataverse Custom APIs instead.
+  </div>
+</section>
+
+<!-- ═══════════ 10. KEY METRICS ═══════════ -->
+<section id="metrics">
+  <h2>📈 10 — Key Metrics We Report On</h2>
+
+  <h3>GitHub Metrics (14-day baseline from April 10, 2026)</h3>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="icon">👁️</div><div class="value" style="color:var(--accent)">146</div><div class="label">Page Views</div></div>
+    <div class="kpi"><div class="icon">👤</div><div class="value" style="color:var(--purple)">28</div><div class="label">Unique Visitors</div></div>
+    <div class="kpi"><div class="icon">📋</div><div class="value" style="color:var(--green)">58</div><div class="label">Clones</div></div>
+    <div class="kpi"><div class="icon">🔗</div><div class="value" style="color:var(--orange)">teams.cdn</div><div class="label">Top Referrer</div></div>
+  </div>
+
+  <h3>CSK Global Metrics (April 9, 2026)</h3>
+  <div class="kpi-grid">
+    <div class="kpi"><div class="icon">🌍</div><div class="value" style="color:var(--accent)">8,781</div><div class="label">Installed Environments</div></div>
+    <div class="kpi"><div class="icon">🏢</div><div class="value" style="color:var(--green)">4,794+</div><div class="label">Installed Tenants</div></div>
+    <div class="kpi"><div class="icon">⚡</div><div class="value" style="color:var(--purple)">8,206</div><div class="label">Active Tenants (Flows)</div></div>
+    <div class="kpi"><div class="icon">🤖</div><div class="value" style="color:var(--orange)">463K</div><div class="label">Bots with Collections</div></div>
+    <div class="kpi"><div class="icon">📊</div><div class="value" style="color:var(--pink)">2,231</div><div class="label">Custom Page MAU</div></div>
+    <div class="kpi"><div class="icon">🔧</div><div class="value" style="color:var(--teal)">355K</div><div class="label">Kit Flows Deployed</div></div>
+  </div>
+</section>
+
+<!-- ═══════════ 10a. DOWNLOAD TRACKING STRATEGY ═══════════ -->
+<section id="downloads">
+  <h2>🎯 10a — Download Tracking: The Critical Gap</h2>
+
+  <div class="error-box">
+    <strong>⚠️ The #1 thing to understand:</strong> GitHub tracks <strong>three download methods completely separately</strong>, and one of them isn't tracked at all. If you don't route downloads correctly, you'll lose visibility.
+  </div>
+
+  <h3>What GitHub Actually Tracks (and Doesn't)</h3>
+
+  <table>
+    <tr><th>Download Method</th><th>User Action</th><th>Tracked?</th><th>API</th><th>Retention</th></tr>
+    <tr>
+      <td><strong><code>git clone</code></strong></td>
+      <td>User runs <code>git clone</code> in terminal</td>
+      <td><span class="badge badge-green">✅ Yes</span></td>
+      <td>Traffic API <code>/traffic/clones</code></td>
+      <td>Rolling 14 days</td>
+    </tr>
+    <tr>
+      <td><strong>Release Asset Download</strong></td>
+      <td>User clicks a file attached to a GitHub Release</td>
+      <td><span class="badge badge-green">✅ Yes</span></td>
+      <td>Releases API <code>/releases</code> → <code>download_count</code></td>
+      <td>Cumulative (forever) ✅</td>
+    </tr>
+    <tr>
+      <td><strong>"Download ZIP" button</strong></td>
+      <td>User clicks green Code button → Download ZIP</td>
+      <td><span class="badge badge-pink">❌ NOT tracked</span></td>
+      <td>None</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td><strong>Raw file link</strong></td>
+      <td>User clicks a .zip file <em>inside the repo tree</em></td>
+      <td><span class="badge badge-pink">❌ NOT tracked</span></td>
+      <td>None</td>
+      <td>N/A</td>
+    </tr>
+    <tr>
+      <td><strong>raw.githubusercontent.com</strong></td>
+      <td>Direct link to blob content</td>
+      <td><span class="badge badge-pink">❌ NOT tracked</span></td>
+      <td>None</td>
+      <td>N/A</td>
+    </tr>
+  </table>
+
+  <div class="warn-box">
+    <strong>🚨 This means:</strong> The .zip files currently sitting <em>inside</em> each template folder (e.g., <code>Plan My Day/PlanMyDay_v1.0.0.0.zip</code>) are <strong>NOT trackable as downloads</strong>. When someone clicks them in the GitHub UI or follows a raw link, that download is invisible to us. We can only see them in <code>popular/paths</code> page views, not actual downloads.
+  </div>
+
+  <h3>The Fix: Use GitHub Releases</h3>
+
+  <p><strong>GitHub Releases</strong> are the <em>only</em> GitHub-native mechanism that gives per-file download counts. The strategy:</p>
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body">
+      <h4>Create a tagged Release per template</h4>
+      <p>Each template gets its own release tag (e.g., <code>plan-my-day-v1.0.0</code>) with the .zip uploaded as a <strong>release asset</strong>.</p>
+<pre><code># Create releases via gh CLI:
+gh release create plan-my-day-v1.0.0 \
+  "Plan My Day/PlanMyDay_v1.0.0.0.zip" \
+  --repo microsoft/m365-agent-templates \
+  --title "Plan My Day v1.0.0" \
+  --notes "Declarative Agent for daily briefing from calendar, email, Teams, and files."
+
+gh release create my-company-policy-v1.0.0 \
+  "My Company Policy/MyCompanyPolicy_1_0_0_0.zip" \
+  --repo microsoft/m365-agent-templates \
+  --title "My Company Policy v1.0.0" \
+  --notes "Declarative Agent for policy Q&A grounded in SharePoint documents."
+
+gh release create executive-briefing-v1.0.0 \
+  "Executive Briefing/ExecutiveBriefingAgent_v1.0.0.0.zip" \
+  --repo microsoft/m365-agent-templates \
+  --title "Executive Briefing v1.0.0" \
+  --notes "Declarative Agent for meeting prep and executive briefings."
+
+gh release create request-tracker-v1.0.0 \
+  "Request Tracker/RequestTrackerAgent_1_0_0_0.zip" \
+  --repo microsoft/m365-agent-templates \
+  --title "Request Tracker v1.0.0" \
+  --notes "Custom Agent (Copilot Studio) for internal request management."
+
+gh release create know-my-customer-v1.0.0 \
+  "Know My Customer/KnowMyCustomer_1_0_0_0.zip" \
+  --repo microsoft/m365-agent-templates \
+  --title "Know My Customer v1.0.0" \
+  --notes "Custom Agent (Copilot Studio) for 360° customer profiles."</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body">
+      <h4>Point ALL download links to the Release asset</h4>
+      <p>Every download path — aka.ms links, SharePoint links, internal docs, field decks — must route to the same Release asset URL:</p>
+<pre><code># Release asset URL pattern:
+https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filename}
+
+# Examples:
+https://github.com/microsoft/m365-agent-templates/releases/download/plan-my-day-v1.0.0/PlanMyDay_v1.0.0.0.zip
+https://github.com/microsoft/m365-agent-templates/releases/download/request-tracker-v1.0.0/RequestTrackerAgent_1_0_0_0.zip</code></pre>
+      <p>Then create aka.ms short links that redirect to these:</p>
+<pre><code>aka.ms/cskagentlib/dailyplanner    → releases/download/plan-my-day-v1.0.0/PlanMyDay_v1.0.0.0.zip
+aka.ms/cskagentlib/companypolicy   → releases/download/my-company-policy-v1.0.0/MyCompanyPolicy_1_0_0_0.zip
+aka.ms/cskagentlib/execbriefing    → releases/download/executive-briefing-v1.0.0/ExecutiveBriefingAgent_v1.0.0.0.zip
+aka.ms/cskagentlib/requesttracker  → releases/download/request-tracker-v1.0.0/RequestTrackerAgent_1_0_0_0.zip
+aka.ms/cskagentlib/knowmycustomer  → releases/download/know-my-customer-v1.0.0/KnowMyCustomer_1_0_0_0.zip</code></pre>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body">
+      <h4>Version updates preserve history</h4>
+      <p>When you release v1.1.0, create a <strong>new release tag</strong> (e.g., <code>plan-my-day-v1.1.0</code>). The old release keeps its download count. Update the aka.ms link to point to the new release. This gives you:</p>
+      <ul>
+        <li><strong>Per-version download counts</strong> — see which version was most popular</li>
+        <li><strong>Total all-time downloads</strong> — sum across all releases</li>
+        <li><strong>Preserved history</strong> — old counts never disappear</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>The Routing Rule</h3>
+
+  <div class="card" style="border-color: var(--pink);">
+    <h3 style="color:var(--pink)">🔗 One Download Link to Rule Them All</h3>
+    <p>Every place that links to a template download — README, SharePoint, internal docs, field decks, Teams messages, email signatures — <strong>MUST</strong> point to the same GitHub Release asset URL (or an aka.ms redirect to it). If someone copies the .zip to SharePoint and shares that link instead, those downloads are invisible.</p>
+
+    <table>
+      <tr><th>Source</th><th>✅ Do This</th><th>❌ Not This</th></tr>
+      <tr>
+        <td>README.md</td>
+        <td>Link to Release asset or aka.ms redirect</td>
+        <td>Link to blob in repo tree</td>
+      </tr>
+      <tr>
+        <td>SharePoint page</td>
+        <td>Link to aka.ms → Release asset</td>
+        <td>Upload .zip to SPO document library</td>
+      </tr>
+      <tr>
+        <td>Field deck / email</td>
+        <td>Link to aka.ms → Release asset</td>
+        <td>Attach .zip directly</td>
+      </tr>
+      <tr>
+        <td>Agent Library app</td>
+        <td>"Download" button → Release asset URL</td>
+        <td>Serve from Dataverse/blob</td>
+      </tr>
+    </table>
+  </div>
+
+  <h3>What We CAN Track Separately</h3>
+  <table>
+    <tr><th>Signal</th><th>API</th><th>What It Tells You</th><th>Retention</th></tr>
+    <tr>
+      <td><strong>Clones</strong> (<code>git clone</code>)</td>
+      <td><code>/traffic/clones</code></td>
+      <td>Developers pulling the full repo to customize/contribute</td>
+      <td>14 days (rolling)</td>
+    </tr>
+    <tr>
+      <td><strong>Release downloads</strong></td>
+      <td><code>/releases</code> → per-asset <code>download_count</code></td>
+      <td>Users downloading a specific template package to deploy</td>
+      <td>Forever (cumulative) ✅</td>
+    </tr>
+    <tr>
+      <td><strong>Page views</strong></td>
+      <td><code>/traffic/views</code></td>
+      <td>People visiting the repo (awareness/discovery)</td>
+      <td>14 days (rolling)</td>
+    </tr>
+    <tr>
+      <td><strong>Popular paths</strong></td>
+      <td><code>/traffic/popular/paths</code></td>
+      <td>Which template folders are getting the most attention</td>
+      <td>14 days (rolling)</td>
+    </tr>
+    <tr>
+      <td><strong>Referrers</strong></td>
+      <td><code>/traffic/popular/referrers</code></td>
+      <td>Where traffic is coming from (aka.ms, Teams, Google, etc.)</td>
+      <td>14 days (rolling)</td>
+    </tr>
+  </table>
+
+  <div class="info-box">
+    <strong>💡 The "Download ZIP" button</strong> (green Code button → Download ZIP) downloads the <em>entire repo</em> as a zip. This is <strong>NOT counted anywhere</strong> — not in clones, not in releases, not in traffic. There is no GitHub API for this. If users are told to "download the whole repo," those downloads are invisible. Always point them to specific Release assets instead.
+  </div>
+
+  <h3>Querying Release Download Counts</h3>
+<pre><code># PowerShell — get per-template download counts
+$headers = @{ Authorization = "Bearer $env:GITHUB_TOKEN"; Accept = "application/vnd.github+json" }
+$releases = Invoke-RestMethod "https://api.github.com/repos/microsoft/m365-agent-templates/releases" -Headers $headers
+
+foreach ($r in $releases) {
+    $total = ($r.assets | Measure-Object download_count -Sum).Sum
+    Write-Host "$($r.tag_name): $total downloads"
+    foreach ($a in $r.assets) {
+        Write-Host "  $($a.name): $($a.download_count)"
+    }
+}</code></pre>
+
+</section>
+
+<!-- ═══════════ 10b. REPO PATH MAP ═══════════ -->
+<section id="paths">
+  <h2>🗂️ 10b — Repo Path Map: What to Track</h2>
+
+  <p>The <code>microsoft/m365-agent-templates</code> repo has <strong>5 agent template folders</strong>, each containing a complete Bill of Materials. Here's every trackable path:</p>
+
+  <h3>Repo Structure (Live as of April 2026)</h3>
+<pre><code>microsoft/m365-agent-templates/
+├── README.md                              ← 🏠 Repo landing page (primary traffic magnet)
+├── LICENSE
+├── .github/
+│   ├── social-preview.png
+│   ├── CODE_OF_CONDUCT.md
+│   ├── SECURITY.md
+│   ├── SUPPORT.md
+│   ├── ISSUE_TEMPLATE/                    ← Bug report + feature request templates
+│   └── workflows/
+│
+├── 📅 Plan My Day/                        ← Declarative Agent (M365 Copilot)
+│   ├── README.md                          ← Template landing page
+│   ├── PlanMyDay_v1.0.0.0.zip             ← 📦 Agent package (35.5 KB)
+│   ├── Plan My Day Agent - Setup Guide.docx
+│   ├── Plan My Day Agent - Overview Deck.pptx (11.9 MB)
+│   ├── Plan My Day Agent - Evaluation Test Plan.docx
+│   └── Plan My Day Icon.png
+│
+├── 📋 My Company Policy/                  ← Declarative Agent (M365 Copilot)
+│   ├── README.md
+│   ├── MyCompanyPolicy_1_0_0_0.zip        ← 📦 Agent package (78.5 KB)
+│   ├── My Company Policy Agent - Setup Guide.docx
+│   ├── My Company Policy Agent - Overview Deck.pptx (15.1 MB)
+│   ├── My Company Policy Agent - Evaluation Test Plan.docx
+│   ├── My Company Policy Icon.png
+│   ├── Eval Sets/                         ← 10 evaluation CSVs + README
+│   │   ├── 01_grounding_accuracy.csv
+│   │   ├── 02_citation_behavior.csv
+│   │   ├── 03_clarification_behavior.csv
+│   │   ├── 04_out_of_scope.csv
+│   │   ├── 05_tone_and_persona.csv
+│   │   ├── 06_sensitivity_handling.csv
+│   │   ├── 07_disclaimer.csv
+│   │   ├── 08_location_awareness.csv
+│   │   ├── 09_cross_document.csv
+│   │   ├── 10_conversation_starters.csv
+│   │   └── README.md
+│   └── Sample Files/                      ← 13 sample policy documents
+│       ├── 01_Employment_Classification_Policy.docx
+│       ├── ... (13 total .docx files)
+│       └── 13_Building_Maintenance_Facilities.docx
+│
+├── 📊 Executive Briefing/                 ← Declarative Agent (M365 Copilot)
+│   ├── README.md
+│   ├── ExecutiveBriefingAgent_v1.0.0.0.zip ← 📦 Agent package (35.4 KB)
+│   ├── Executive Briefing Agent - Setup Guide.docx
+│   ├── Executive Briefing Agent - Overview Deck.pptx (11.9 MB)
+│   ├── Executive Briefing Agent - Evaluation Test Plan.docx
+│   └── Executive_Briefing_Icon.png
+│
+├── 📝 Request Tracker/                    ← Custom Agent (Copilot Studio)
+│   ├── README.md
+│   ├── RequestTrackerAgent_1_0_0_0.zip    ← 📦 Agent package (206 KB)
+│   ├── Request Tracker Agent - Setup Guide.docx
+│   ├── Request Tracker Agent - Overview Deck.pptx (14.8 MB)
+│   ├── Request Tracker Agent - Evaluation Test Plan.docx
+│   ├── Request Tracker Agent - Evaluation Test Set.csv
+│   ├── Request Tracker Icon.png
+│   ├── Eval Sets/                         ← 7 evaluation CSVs + README
+│   │   ├── 01-topic-routing.csv
+│   │   ├── 02-create-flow.csv
+│   │   ├── 03-update-flow.csv
+│   │   ├── 04-search-query.csv
+│   │   ├── 05-edge-cases.csv
+│   │   ├── 06-negative-cases.csv
+│   │   ├── 07-multi-turn-conversations.csv
+│   │   └── README.md
+│   └── Sample Data/
+│       ├── Employee_FAQ.docx
+│       ├── event-planning-sample-data.xlsx
+│       └── Readme.md
+│
+└── 🔍 Know My Customer/                   ← Custom Agent (Copilot Studio)
+    ├── README.md
+    ├── KnowMyCustomer_1_0_0_0.zip         ← 📦 Agent package (124 KB)
+    ├── Know My Customer Agent - Setup Guide.docx
+    ├── Know My Customer Agent - Overview Deck.pptx (10.7 MB)
+    ├── Know My Customer Agent - Evaluation Test Plan.docx
+    ├── Know My Customer Agent - Evaluation Test Set.csv
+    ├── Know My Customer Agent - Word Template.docx
+    └── Know My Customer Icon.png</code></pre>
+
+  <h3>High-Value Paths to Watch in Traffic</h3>
+  <p>These are the paths that tell us the most about adoption intent — prioritize these in the <code>popular/paths</code> API output:</p>
+
+  <table>
+    <tr><th>Priority</th><th>Path</th><th>Signal</th><th>What It Tells Us</th></tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates</code></td>
+      <td>Repo landing</td>
+      <td>Overall discoverability — are people finding us?</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates/tree/main/Plan%20My%20Day</code></td>
+      <td>Template browse</td>
+      <td>Interest in Plan My Day template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates/tree/main/My%20Company%20Policy</code></td>
+      <td>Template browse</td>
+      <td>Interest in Company Policy template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates/tree/main/Executive%20Briefing</code></td>
+      <td>Template browse</td>
+      <td>Interest in Executive Briefing template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates/tree/main/Request%20Tracker</code></td>
+      <td>Template browse</td>
+      <td>Interest in Request Tracker template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-pink">🔥 P0</span></td>
+      <td><code>/microsoft/m365-agent-templates/tree/main/Know%20My%20Customer</code></td>
+      <td>Template browse</td>
+      <td>Interest in Know My Customer template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-orange">⚡ P1</span></td>
+      <td><code>.../Plan My Day/README.md</code></td>
+      <td>Deep read</td>
+      <td>Actively evaluating the template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-orange">⚡ P1</span></td>
+      <td><code>.../My Company Policy/README.md</code></td>
+      <td>Deep read</td>
+      <td>Actively evaluating the template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-orange">⚡ P1</span></td>
+      <td><code>.../Executive Briefing/README.md</code></td>
+      <td>Deep read</td>
+      <td>Actively evaluating the template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-orange">⚡ P1</span></td>
+      <td><code>.../Request Tracker/README.md</code></td>
+      <td>Deep read</td>
+      <td>Actively evaluating the template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-orange">⚡ P1</span></td>
+      <td><code>.../Know My Customer/README.md</code></td>
+      <td>Deep read</td>
+      <td>Actively evaluating the template</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-green">📦 P1</span></td>
+      <td><code>.../PlanMyDay_v1.0.0.0.zip</code></td>
+      <td>Download intent</td>
+      <td><strong>Strongest adoption signal</strong> — user wants to deploy</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-green">📦 P1</span></td>
+      <td><code>.../MyCompanyPolicy_1_0_0_0.zip</code></td>
+      <td>Download intent</td>
+      <td>Strongest adoption signal</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-green">📦 P1</span></td>
+      <td><code>.../ExecutiveBriefingAgent_v1.0.0.0.zip</code></td>
+      <td>Download intent</td>
+      <td>Strongest adoption signal</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-green">📦 P1</span></td>
+      <td><code>.../RequestTrackerAgent_1_0_0_0.zip</code></td>
+      <td>Download intent</td>
+      <td>Strongest adoption signal</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-green">📦 P1</span></td>
+      <td><code>.../KnowMyCustomer_1_0_0_0.zip</code></td>
+      <td>Download intent</td>
+      <td>Strongest adoption signal</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-blue">📘 P2</span></td>
+      <td><code>...Setup Guide.docx</code> (any template)</td>
+      <td>Setup intent</td>
+      <td>User is actively trying to deploy</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-blue">📘 P2</span></td>
+      <td><code>...Eval Sets/</code> or <code>...Sample Files/</code></td>
+      <td>Testing intent</td>
+      <td>User is evaluating quality / testing</td>
+    </tr>
+    <tr>
+      <td><span class="badge badge-purple">📊 P2</span></td>
+      <td><code>...Overview Deck.pptx</code> (any template)</td>
+      <td>Pitch intent</td>
+      <td>User is socializing internally (exec buy-in)</td>
+    </tr>
+  </table>
+
+  <h3>Agent Type Breakdown</h3>
+  <table>
+    <tr><th>Template</th><th>Type</th><th>Package Format</th><th>Contents Count</th><th>Learn More</th></tr>
+    <tr>
+      <td>📅 Plan My Day</td>
+      <td><span class="badge badge-blue">Declarative Agent</span></td>
+      <td><code>.zip</code> (Teams manifest)</td>
+      <td>6 files</td>
+      <td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Plan%20My%20Day">📂 View on GitHub</a></td>
+    </tr>
+    <tr>
+      <td>📋 My Company Policy</td>
+      <td><span class="badge badge-blue">Declarative Agent</span></td>
+      <td><code>.zip</code> (Teams manifest)</td>
+      <td>7 files + 10 eval CSVs + 13 sample docs</td>
+      <td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/My%20Company%20Policy">📂 View on GitHub</a></td>
+    </tr>
+    <tr>
+      <td>📊 Executive Briefing</td>
+      <td><span class="badge badge-blue">Declarative Agent</span></td>
+      <td><code>.zip</code> (Teams manifest)</td>
+      <td>6 files</td>
+      <td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Executive%20Briefing">📂 View on GitHub</a></td>
+    </tr>
+    <tr>
+      <td>📝 Request Tracker</td>
+      <td><span class="badge badge-purple">Custom Agent (Copilot Studio)</span></td>
+      <td><code>.zip</code> (PP Solution)</td>
+      <td>8 files + 7 eval CSVs + 3 sample data</td>
+      <td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Request%20Tracker">📂 View on GitHub</a></td>
+    </tr>
+    <tr>
+      <td>🔍 Know My Customer</td>
+      <td><span class="badge badge-purple">Custom Agent (Copilot Studio)</span></td>
+      <td><code>.zip</code> (PP Solution)</td>
+      <td>8 files</td>
+      <td><a href="https://github.com/microsoft/m365-agent-templates/tree/main/Know%20My%20Customer">📂 View on GitHub</a></td>
+    </tr>
+  </table>
+
+  <h3>View Badge Paths (hits.sh)</h3>
+  <p>Each folder should have its own badge for per-template view tracking:</p>
+<pre><code><!-- Repo root -->
+https://hits.sh/github.com/microsoft/m365-agent-templates.svg
+
+<!-- Per-template -->
+https://hits.sh/github.com/microsoft/m365-agent-templates/Plan-My-Day.svg
+https://hits.sh/github.com/microsoft/m365-agent-templates/My-Company-Policy.svg
+https://hits.sh/github.com/microsoft/m365-agent-templates/Executive-Briefing.svg
+https://hits.sh/github.com/microsoft/m365-agent-templates/Request-Tracker.svg
+https://hits.sh/github.com/microsoft/m365-agent-templates/Know-My-Customer.svg</code></pre>
+
+  <div class="success-box">
+    <strong>💡 Pro tip:</strong> The GitHub Traffic API <code>popular/paths</code> endpoint only returns the <strong>top 10</strong> paths. If a template folder doesn't show up, it means it's getting fewer views than the top 10. Watch for .zip file paths — those are the <strong>strongest adoption signal</strong> since they indicate download intent.
+  </div>
+</section>
+
+<!-- ═══════════ 11. VIEW BADGES ═══════════ -->
+<section id="badges">
+  <h2>🏷️ 11 — View Badges for READMEs</h2>
+
+  <p>We use <a href="https://hits.sh">hits.sh</a> to add view-tracking badges to README files. Every time someone views the README, the badge counter increments.</p>
+
+  <h3>Visible Badge</h3>
+  <p>Shows a blue counter that's visible to visitors:</p>
+<pre><code>[![Views](https://hits.sh/github.com/microsoft/m365-agent-templates.svg?label=views&amp;color=0078D4)](https://hits.sh/github.com/microsoft/m365-agent-templates/)</code></pre>
+
+  <h3>Stealth Badge</h3>
+  <p>Invisible tracking (white on white):</p>
+<pre><code>[![](https://hits.sh/github.com/microsoft/m365-agent-templates.svg?color=ffffff&amp;labelColor=ffffff)](https://hits.sh/github.com/microsoft/m365-agent-templates/)</code></pre>
+
+  <h3>Per-Folder Badges</h3>
+  <p>You can track individual template folders by adding unique badge URLs per path:</p>
+<pre><code>[![Views](https://hits.sh/github.com/microsoft/m365-agent-templates/templates/daily-planner.svg?label=views&amp;color=0078D4)](...)</code></pre>
+  <p>The badge script (<code>m365-agent-templates-add-view-badges.ps1</code>) automates this across all folders.</p>
+</section>
+
+<!-- ═══════════ 12. APPENDIX ═══════════ -->
+<section id="appendix">
+  <h2>📚 12 — Appendix: KQL Query Library</h2>
+
+  <h3>Global Cluster Union Pattern (Required for Complete Data)</h3>
+  <p>Always union all 11 regional clusters — querying a single cluster only returns data for that region:</p>
+<pre><code>let _OrgSolutionsInstalled = OrgSolutionsInstalled
+  | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebfrfrc.francecentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebdegec.germanywestcentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebchzrh.switzerlandnorth.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebnoeno.norwayeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled
+  | union cluster('fdislandswebsecse.swedencentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled;</code></pre>
+
+  <div class="warn-box">
+    <strong>⚠️ KQL Syntax Gotcha:</strong> You CANNOT use <code>let db = cluster(...).database(...); db.Table</code> — that syntax is invalid. Always use the full inline <code>cluster('...').database('...').Table</code>.
+  </div>
+
+  <h3>Agent Template Install Count</h3>
+<pre><code>// Count installs per agent template across all regions
+_OrgSolutionsInstalled
+| where SolutionUniqueName startswith "AgentLib_"
+| where PublisherUniqueName == "PowerCat"
+| summarize Environments = dcount(OrganizationId) by SolutionUniqueName, SolutionVersion
+| order by Environments desc</code></pre>
+
+  <h3>Agent Template Usage (Durable via Bot Schema)</h3>
+<pre><code>ChatbotDetails
+| where BotSchemaName in (
+    "cat_dailyplanner", "cat_customerresearcher", "cat_executiveinsights",
+    "cat_companypolicyqa", "cat_requesttracker"
+)
+| summarize Environments = dcount(OrganizationId), Bots = count() by BotSchemaName
+| order by Environments desc</code></pre>
+
+  <h3>Tenant Name Resolution</h3>
+<pre><code>// Join org → tenant → company name
+_OrgSolutionsInstalled
+| where SolutionUniqueName startswith "AgentLib_"
+| join kind=inner OrganizationDetails on $left.OrganizationId == $right.Id
+| join kind=leftouter (
+    cluster('powerautomatefunbipme.eastus2.kusto.windows.net')
+      .database('SelfServiceData').dimTenant
+    | where IsTestTenant == 0
+    | project TenantId, TenantName
+) on TenantId
+| project SolutionUniqueName, TenantName, FriendlyName, DomainName, Geo, CountryCode</code></pre>
+
+  <h3>Test Tenant Exclusion</h3>
+<pre><code>let TestTenants = dynamic([
+  '23dc67c7-c437-4c8c-b17d-a8eb749e2ad7',  // TIP0
+  '48619c59-dbe9-4218-b8fd-e9b746e93508',  // TIP1
+  'a8037933-4d29-4ef8-8754-e67b2edd480b',  // GCC test
+  'f8cdef31-a31e-4b4a-93e4-5f571e91255a',  // MSA consumer
+  '9188040d-6c67-4c5b-b112-36a304b66dad'   // MSA consumer
+]);</code></pre>
+
+  <h3>Column Name Gotchas (SolutionImport vs SolutionUninstall)</h3>
+  <table>
+    <tr><th>Field</th><th>SolutionImport</th><th>SolutionUninstall</th><th>Trap</th></tr>
+    <tr><td>Publisher</td><td><code>publisherName</code></td><td><code>uniquePublisherName</code></td><td>Different column name!</td></tr>
+    <tr><td>Success</td><td><code>hasImportFailed</code> (bool)</td><td><code>isSuccess</code> (bool)</td><td>Inverted logic!</td></tr>
+    <tr><td>Version</td><td><code>solutionVersion</code></td><td><code>version</code></td><td>Different column name!</td></tr>
+  </table>
+
+  <h3>Useful Links</h3>
+  <table>
+    <tr><th>Resource</th><th>URL</th></tr>
+    <tr><td>Live ADX Dashboard</td><td><a href="https://dataexplorer.azure.com/dashboards/c46ae0ef-e6f2-4489-8429-8b5dc17bceba">dataexplorer.azure.com/dashboards/...</a></td></tr>
+    <tr><td>GitHub Repo</td><td><a href="https://github.com/microsoft/m365-agent-templates">github.com/microsoft/m365-agent-templates</a></td></tr>
+    <tr><td>CDS Telemetry Eng.ms Docs</td><td><a href="https://eng.ms/docs/experiences-devices/business-and-industry-copilot/bic-agent-365/bac-foundations/bic-coreservices-telemetry/cds-telemetry/azuredataexplorerkusto/azuredataexplorerkustooverview">eng.ms/docs/.../azuredataexplorerkustooverview</a></td></tr>
+    <tr><td>Chris Garty's Dashboard</td><td><a href="https://dataexplorer.azure.com/dashboards/e8d268d2-1f26-44a9-b206-5eea7c95410a">dataexplorer.azure.com/dashboards/...</a></td></tr>
+    <tr><td>Kusto Access</td><td><a href="https://myaccess.microsoft.com">myaccess.microsoft.com</a> (search "BIC-DataAccess-US")</td></tr>
+  </table>
+</section>
+
+<!-- ═══════════ FOOTER ═══════════ -->
+<div class="footer">
+  <p>📊 GitHub Telemetry Guide · Copilot Advisory Team (CAT) · Microsoft · April 2026</p>
+  <p>Built with 💜 by Denise Moran · Transferable as a Copilot skill via <code>copilot-agents/csk/telemetry/</code></p>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>
