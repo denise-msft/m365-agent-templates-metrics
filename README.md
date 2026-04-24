@@ -2,6 +2,8 @@
 
 Telemetry tracking toolkit for [microsoft/m365-agent-templates](https://github.com/microsoft/m365-agent-templates) — the open-source home for M365 Copilot and Copilot Studio agent templates.
 
+Covers the full telemetry picture across **Declarative Agents (DA)** distributed via GitHub and **Copilot Studio Agents (CA)** distributed via AppSource / Power Platform solutions.
+
 ## 🚀 Quick Start
 
 ```powershell
@@ -32,11 +34,343 @@ $env:GITHUB_TOKEN = (gh auth token)
 | 📝 Request Tracker | Custom Agent (CS) | [/Request Tracker](https://github.com/microsoft/m365-agent-templates/tree/main/Request%20Tracker) |
 | 🔍 Know My Customer | Custom Agent (CS) | [/Know My Customer](https://github.com/microsoft/m365-agent-templates/tree/main/Know%20My%20Customer) |
 
+---
+
+## 📐 Telemetry Data Sources — Complete Reference
+
+**DA** = Declarative Agent (M365 Agent Builder, distributed via GitHub).
+**CA** = Copilot Studio Agent (Power Platform solution, distributed via AppSource / solution import).
+
+### DA vs CA Data Source Matrix
+
+| Data Point | DA Source | CA Source |
+|-----------|----------|----------|
+| GH Landing Page downloads | ✅ GitHub Releases API | ❌ N/A |
+| GH Repo traffic | ✅ GitHub Traffic API | ❌ N/A |
+| Marketplace downloads | ❌ N/A | ✅ AppSource publisher analytics |
+| TCT clicks (HPA templates) | ✅ TCT site analytics (TBD) | ❌ N/A |
+| Agent Library in-app downloads | ✅ Custom telemetry (Code App) | ✅ Custom telemetry (Code App) |
+| Sideloaded app installs | ✅ M365/Teams Admin (Justin dashboard) | ❌ N/A |
+| MCS publisher installs | ❌ N/A | ✅ CRMAnalytics Kusto |
+| Agent Library app installs | ❌ N/A | ✅ CRMAnalytics Kusto + AppSource |
+| Individual agent installs | ❌ N/A (sideload = per-app tracking) | ✅ CRMAnalytics Kusto (two-layer) |
+| CSK installs | ❌ N/A | ✅ CRMAnalytics Kusto |
+
+---
+
+### 📥 DOWNLOADS
+
+#### 1. GitHub Landing Page — Downloads by Agent, by File, and Whole Repo
+
+| Field | Value |
+|-------|-------|
+| **Source** | GitHub Releases API |
+| **Applies to** | DA only |
+| **API** | `GET /repos/microsoft/m365-agent-templates/releases` |
+| **What you get** | Per-release, per-asset `download_count` — break down by agent (tag) and by file |
+| **Retention** | Cumulative (all-time) ✅ |
+| **Auth** | PAT with `repo` scope or `gh auth token` with push access |
+
+> **Critical:** Only Release assets have download counters. Files in the repo tree (.zip in a folder) are NOT tracked. All download links (aka.ms, README, SharePoint, field decks) must route to Release asset URLs or counts are invisible.
+
+**Release asset URL pattern:**
+```
+https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filename}
+```
+
+**Release tags per template:**
+
+| Template | Release Tag |
+|----------|-------------|
+| Daily Planner | `daily-planner-v1.0.0` |
+| Customer Researcher | `customer-researcher-v1.0.0` |
+| Executive Insights | `executive-insights-v1.0.0` |
+| Company Policy Q&A | `company-policy-qa-v1.0.0` |
+| Request Tracker | `request-tracker-v1.0.0` |
+
+#### 2. GitHub Repo — Traffic (Whole Repo Only)
+
+| Field | Value |
+|-------|-------|
+| **Source** | GitHub Traffic API |
+| **Applies to** | DA only (repo = `microsoft/m365-agent-templates`) |
+| **Retention** | ⚠️ Rolling 14-day window — must collect weekly to preserve history |
+| **Auth** | Requires **push access** to the repo (read-only tokens get 403) |
+
+**Endpoints:**
+
+| Endpoint | Data |
+|----------|------|
+| `GET /repos/{owner}/{repo}/traffic/views` | Daily page views + unique visitors |
+| `GET /repos/{owner}/{repo}/traffic/clones` | Daily clones + unique cloners |
+| `GET /repos/{owner}/{repo}/traffic/popular/paths` | Top 10 most-viewed paths |
+| `GET /repos/{owner}/{repo}/traffic/popular/referrers` | Top referral sources |
+
+**Clone caveats:**
+- "Download ZIP" (green Code button) counts as a clone, not a tracked download
+- Clones include CI/GitHub Actions — no way to filter bots from real users
+- "Unique cloners" = distinct IP addresses, not GitHub accounts
+- Each ephemeral CI runner = new IP = new "unique"
+
+**Metric trust levels:**
+
+| Metric | Use For | Bot/CI Risk |
+|--------|---------|-------------|
+| Unique visitors (views) | Awareness/reach | 🟢 Low |
+| Release downloads | **Actual adoption (best signal)** | 🟢 Low |
+| Referrers | Attribution (where humans came from) | 🟢 Clean |
+| Unique cloners | Developer interest | 🟡 Medium (CI inflates) |
+| Total clones | Vanity only | 🔴 High (CI inflates heavily) |
+
+#### 3. Marketplace Downloads — Copilot Agents Library
+
+| Field | Value |
+|-------|-------|
+| **Source** | AppSource / Marketplace publisher analytics |
+| **Applies to** | CA (the Agent Library app is a Power Platform solution) |
+| **Marketplace URL** | [`microsoftpowercatarch.agentlibrary-preview`](https://marketplace.microsoft.com/en-us/product/dynamics-365/microsoftpowercatarch.agentlibrary-preview) |
+| **Publisher ID** | `microsoftpowercatarch` |
+| **Offer ID** | `agentlibrary-preview` |
+| **Flight Code** | `048a8669f61d44538b22ff5adf102788` |
+| **Status** | Preview (flight-gated) |
+
+AppSource provides its own analytics dashboard for publishers. This tracks the Agent Library *app itself*, not individual templates within it.
+
+#### 4. Clicks via TCT (HPA Templates Site)
+
+| Field | Value |
+|-------|-------|
+| **Source** | TCT site analytics (TBD — likely 1DS / App Insights on the TCT web surface) |
+| **Applies to** | DA (HPA templates linked from TCT) |
+| **Deep links** | TCT → Agent Gallery per agent: `planMyDay`, `knowMyCustomer`, `executiveBriefing`, `myCompanyPolicy`, `requestTracker` |
+| **Status** | Deep links ready (Mehdi) but integration pending alignment |
+
+Click tracking depends on TCT's own telemetry implementation. Confirm with Mehdi/Chithra what analytics are instrumented on those deep links.
+
+#### 5. Downloads via the Copilot Agents Library (In-App)
+
+| Field | Value |
+|-------|-------|
+| **Source** | Agent Library Code App (custom telemetry) |
+| **Applies to** | Both DA and CA — the Agent Library app serves as a catalog for both types |
+| **Current state** | Code Apps CSP blocks direct 1DS telemetry — must route through Dataverse Custom APIs |
+| **DA flow** | User clicks "Customize & Download" / "Use Agent Builder" / "Build with Visual Studio" → download triggers |
+| **CA flow** | User clicks deploy → solution import into their environment |
+
+---
+
+### 📦 INSTALLS
+
+#### 6. By App IDs for Sideloaded Apps
+
+| Field | Value |
+|-------|-------|
+| **Source** | M365 Admin / Teams Admin Center telemetry |
+| **Applies to** | DA only — M365 Agent Builder DAs are sideloaded as Teams app packages |
+| **Install method** | Sideload via Teams or Teams Admin Center |
+| **Tracking** | By specific App IDs embedded in each DA's `manifest.json` |
+| **Status** | 🚧 Justin is creating a dashboard — no self-serve source yet |
+
+No zero-setup API exists to programmatically sideload. `POST /appCatalogs/teamsApps` requires `AppCatalog.Submit` or `AppCatalog.ReadWrite.All`. Install tracking requires M365 admin telemetry or Teams usage reports.
+
+#### 7. By Publisher for MCS Agents
+
+| Field | Value |
+|-------|-------|
+| **Source** | **CRMAnalytics Kusto** (CA) |
+| **Kusto database** | `CRMAnalytics` across 11 global clusters |
+| **Primary cluster** | `fdislandswebusby2.westus.kusto.windows.net` |
+| **Key tables** | `OrgSolutionsInstalled`, `SolutionImport`, `OrganizationDetails` |
+| **Filter** | `PublisherUniqueName == "<MCS publisher name>"` |
+| **Retention** | `OrgSolutionsInstalled` = rolling 7d snapshot; `SolutionImport` = 180d history |
+| **Access** | BIC-DataAccess-US/EU via [myaccess.microsoft.com](https://myaccess.microsoft.com); VPN required |
+
+CA-specific — DAs don't go through Dataverse solution import.
+
+#### 8. Installs of the Copilot Agents Library (the App Itself)
+
+| Field | Value |
+|-------|-------|
+| **Source** | **CRMAnalytics Kusto** (CA) + AppSource publisher analytics |
+| **Kusto filter** | `SolutionUniqueName` for the Agent Library solution (confirm exact name via `pac application list`) |
+| **AppSource** | Publisher dashboard analytics for `microsoftpowercatarch.agentlibrary-preview` |
+| **Kusto tables** | `OrgSolutionsInstalled` (current state), `SolutionImport` (historical events) |
+
+Two signals: Kusto tells you which orgs/tenants have it installed. AppSource tells you the download/install funnel from the marketplace listing.
+
+#### 9. Installs of Individual Agents via the Copilot Agents Library
+
+| Field | Value |
+|-------|-------|
+| **Source** | **CRMAnalytics Kusto** (CA) |
+| **Layer 1 — Install signal** | `SolutionUniqueName startswith "AgentLib_"` in `OrgSolutionsInstalled` / `SolutionImport` |
+| **Layer 2 — Durable usage** | Bot schema names in `ChatbotDetails` (immutable, survives solution moves) |
+
+**Why two layers:** Users may move agents to their own solutions after import, breaking solution-level tracking. Bot schema names are **immutable** and persist regardless.
+
+**Solution names → Bot schema mapping:**
+
+| Template | Solution Name | Bot Schema (Durable) |
+|----------|---------------|---------------------|
+| Daily Planner | `AgentLib_DailyPlanner` | `cat_dailyplanner` |
+| Customer Researcher | `AgentLib_CustomerResearcher` | `cat_customerresearcher` |
+| Executive Insights | `AgentLib_ExecutiveInsights` | `cat_executiveinsights` |
+| Company Policy Q&A | `AgentLib_CompanyPolicyQA` | `cat_companypolicyqa` |
+| Request Tracker | `AgentLib_RequestTracker` | `cat_requesttracker` |
+
+**Layer 1 KQL:**
+```kql
+OrgSolutionsInstalled
+| where SolutionUniqueName startswith "AgentLib_"
+| where PublisherUniqueName == "PowerCat"
+| summarize Environments = dcount(OrganizationId) by SolutionUniqueName, SolutionVersion
+| order by Environments desc
+```
+
+**Layer 2 KQL (durable):**
+```kql
+ChatbotDetails
+| where BotSchemaName in (
+    "cat_dailyplanner", "cat_customerresearcher", "cat_executiveinsights",
+    "cat_companypolicyqa", "cat_requesttracker"
+)
+| summarize Environments = dcount(OrganizationId), Bots = count() by BotSchemaName
+| order by Environments desc
+```
+
+#### 10. Installs via the Copilot Studio Kit
+
+| Field | Value |
+|-------|-------|
+| **Source** | **CRMAnalytics Kusto** (CA) |
+| **Kusto filter** | `PublisherUniqueName == "PowerCat"` AND `SolutionUniqueName startswith "CopilotStudio"` |
+| **Component Library** | `SolutionUniqueName startswith "CopilotStudioKit_"` |
+| **Per-feature MAU** | **PPUXAnalytics Kusto** (13 clusters) — Canvas app page loads mapped to CSK page names via `SolutionComponentInfo` |
+
+CA-specific. Full CSK install base query excludes 5 known test tenants.
+
+---
+
+### 🔧 GitHub API Quick Reference
+
+```
+Base: https://api.github.com/repos/microsoft/m365-agent-templates
+
+GET /releases                          → per-asset download_count (cumulative, all-time)
+GET /traffic/views                     → daily views + unique visitors (14d rolling)
+GET /traffic/clones                    → daily clones + unique cloners (14d rolling)
+GET /traffic/popular/paths             → top 10 viewed paths (14d rolling)
+GET /traffic/popular/referrers         → top referral sources (14d rolling)
+```
+
+**Auth header:**
+```
+Authorization: Bearer <token>
+Accept: application/vnd.github+json
+X-GitHub-Api-Version: 2022-11-28
+```
+
+**Quick check (PowerShell):**
+```powershell
+$headers = @{
+    Authorization = "Bearer $env:GITHUB_TOKEN"
+    Accept = "application/vnd.github+json"
+    "X-GitHub-Api-Version" = "2022-11-28"
+}
+$base = "https://api.github.com/repos/microsoft/m365-agent-templates"
+
+# Views
+Invoke-RestMethod "$base/traffic/views" -Headers $headers | ConvertTo-Json
+
+# Clones
+Invoke-RestMethod "$base/traffic/clones" -Headers $headers | ConvertTo-Json
+
+# Release download counts
+Invoke-RestMethod "$base/releases" -Headers $headers |
+  ForEach-Object { "$($_.tag_name): $(($_.assets | Measure-Object download_count -Sum).Sum) downloads" }
+```
+
+### 🔧 Kusto Quick Reference
+
+| System | Table | Filter | DA/CA |
+|--------|-------|--------|-------|
+| CRMAnalytics | `OrgSolutionsInstalled` | `SolutionUniqueName startswith "AgentLib_"` | CA |
+| CRMAnalytics | `SolutionImport` | `solutionName startswith "AgentLib_"` | CA |
+| CRMAnalytics | `ChatbotDetails` | `BotSchemaName in ("cat_dailyplanner", ...)` | CA |
+| CRMAnalytics | `OrganizationDetails` | Join on OrganizationId | CA |
+| PPUXAnalytics | `OutgoingRequest` | AppId from `SolutionComponentInfo` | CA |
+| `powerautomatefunbipme` | `dimTenant` | `IsTestTenant == 0` | CA |
+
+**CRMAnalytics global union (11 clusters):**
+
+| Geo | Cluster URI |
+|-----|-------------|
+| 🇺🇸 NA | `fdislandswebusby2.westus.kusto.windows.net` |
+| 🇪🇺 EMEA-West | `fdislandswebeuams.westeurope.kusto.windows.net` |
+| 🇪🇺 EMEA-North | `fdislandswebeudb3.northeurope.kusto.windows.net` |
+| 🇦🇺 Oceania | `fdislandswebausyd.australiaeast.kusto.windows.net` |
+| 🇯🇵 Japan | `fdislandswebjptyo.japaneast.kusto.windows.net` |
+| 🇨🇦 Canada | `fdislandswebcayto.canadacentral.kusto.windows.net` |
+| 🇫🇷 France | `fdislandswebfrfrc.francecentral.kusto.windows.net` |
+| 🇩🇪 Germany | `fdislandswebdegec.germanywestcentral.kusto.windows.net` |
+| 🇨🇭 Switzerland | `fdislandswebchzrh.switzerlandnorth.kusto.windows.net` |
+| 🇳🇴 Norway | `fdislandswebnoeno.norwayeast.kusto.windows.net` |
+| 🇸🇪 Sweden | `fdislandswebsecse.swedencentral.kusto.windows.net` |
+
+**PPUXAnalytics clusters (13):**
+
+| Geo | Cluster URI |
+|-----|-------------|
+| US | `ppuxunitedstates.centralus.kusto.windows.net` |
+| Europe | `ppuxeurope.westeurope.kusto.windows.net` |
+| UK | `ppuxunitedkingdom.uksouth.kusto.windows.net` |
+| Germany | `ppuxgermany.germanywestcentral.kusto.windows.net` |
+| France | `ppuxfrance.francecentral.kusto.windows.net` |
+| Switzerland | `ppuxswitzerland.switzerlandnorth.kusto.windows.net` |
+| Norway | `ppuxnorway.norwayeast.kusto.windows.net` |
+| Australia | `ppuxaustralia.australiaeast.kusto.windows.net` |
+| Japan | `ppuxjapan.japaneast.kusto.windows.net` |
+| Canada | `ppuxcanada.canadacentral.kusto.windows.net` |
+| India | `ppuxindia.centralindia.kusto.windows.net` |
+| Asia | `ppuxasia.southeastasia.kusto.windows.net` |
+| UAE | `ppuxuae.uaenorth.kusto.windows.net` |
+
+**Access:** BIC-DataAccess-US/EU entitlements via [myaccess.microsoft.com](https://myaccess.microsoft.com). VPN required for all fdislands clusters.
+
+### ⚠️ Known Gotchas
+
+**GitHub:**
+- Traffic API requires **push access** — read-only tokens get 403
+- Traffic data is a **rolling 14-day window** — collect weekly to preserve history
+- `gh auth token` may lack `repo` scope — create classic PAT if needed
+- Clones include CI/GitHub Actions — no way to filter bots from real users
+- "Download ZIP" button counts as a clone but repo tree .zips have NO download counters
+- Only Release assets have download counters — all download links must route to Release assets
+- "Unique cloners" = IP addresses, not accounts — CI runners inflate unique counts
+
+**Kusto:**
+- Cannot use `let db = cluster(...).database(...); db.Table` — must inline full cluster paths
+- `SolutionImport` uses `publisherName` but `SolutionUninstall` uses `uniquePublisherName` (different column names!)
+- `SolutionImport` has `hasImportFailed` (bool) but `SolutionUninstall` has `isSuccess` (inverted logic!)
+- All Kusto clusters require Microsoft corpnet (VPN)
+
+**Code App telemetry:**
+- Code Apps CSP blocks direct 1DS telemetry — must route through Custom APIs
+
+---
+
 ## ⚠️ Download Tracking — The Critical Rule
 
 GitHub only tracks downloads for **Release assets**. Files in the repo tree (the .zip files inside each template folder) are **NOT counted** when downloaded.
 
 **The rule:** Every download link — aka.ms, SharePoint, field decks, README — must point to a **GitHub Release asset URL** (or an aka.ms redirect to one). If someone copies the .zip to SharePoint and shares that link, those downloads are invisible.
+
+| Source | ✅ Do | ❌ Don't |
+|--------|------|---------|
+| README.md | Link to Release asset or aka.ms | Link to blob in repo tree |
+| SharePoint page | aka.ms → Release asset | Upload .zip to SPO library |
+| Field deck / email | aka.ms → Release asset | Attach .zip directly |
+| Agent Library app | "Download" → Release asset URL | Serve from Dataverse/blob |
 
 See the [teaching guide](github-telemetry-guide.html) section 10a for the full breakdown and `gh release create` commands.
 
@@ -45,6 +379,7 @@ See the [teaching guide](github-telemetry-guide.html) section 10a for the full b
 - GitHub PAT with `repo` scope (traffic endpoints need push access)
 - PowerShell 7+ and `gh` CLI
 - For Fabric notebook: access to "Power CAT Team" workspace
+- For Kusto: BIC-DataAccess-US/EU entitlements + VPN
 
 ## 👤 Team
 
