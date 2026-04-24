@@ -43,18 +43,18 @@ $env:GITHUB_TOKEN = (gh auth token)
 
 ### DA vs CA Data Source Matrix
 
-| Data Point | DA Source | CA Source |
-|-----------|----------|----------|
-| GH Landing Page downloads | ✅ GitHub Releases API | ❌ N/A |
-| GH Repo traffic | ✅ GitHub Traffic API | ❌ N/A |
-| Marketplace downloads | ❌ N/A | ✅ AppSource publisher analytics |
-| TCT clicks (HPA templates) | ✅ TCT site analytics (TBD) | ❌ N/A |
-| Agent Library in-app downloads | ✅ Custom telemetry (Code App) | ✅ Custom telemetry (Code App) |
-| Sideloaded app installs | ✅ M365/Teams Admin (Justin dashboard) | ❌ N/A |
-| MCS publisher installs | ❌ N/A | ✅ CRMAnalytics Kusto |
-| Agent Library app installs | ❌ N/A | ✅ CRMAnalytics Kusto + AppSource |
-| Individual agent installs | ❌ N/A (sideload = per-app tracking) | ✅ CRMAnalytics Kusto (two-layer) |
-| CSK installs | ❌ N/A | ✅ CRMAnalytics Kusto |
+| # | Data Point | DA Source | CA Source |
+|---|-----------|----------|----------|
+| 1 | GH Landing Page downloads | [✅ GitHub Releases API](#1-github-landing-page--downloads-by-agent-by-file-and-whole-repo) | [✅ GitHub Releases API](#1-github-landing-page--downloads-by-agent-by-file-and-whole-repo) |
+| 2 | GH Repo traffic | [✅ GitHub Traffic API](#2-github-repo--traffic-whole-repo-only) | [✅ GitHub Traffic API](#2-github-repo--traffic-whole-repo-only) |
+| 3 | Marketplace downloads | ❌ N/A | [✅ AppSource publisher analytics](#3-marketplace-downloads--copilot-agents-library) |
+| 4 | TCT clicks (HPA templates) | [✅ TCT site analytics (TBD)](#4-clicks-via-tct-hpa-templates-site) | ❌ N/A |
+| 5 | Agent Library in-app downloads | [✅ Custom telemetry (Code App)](#5-downloads-via-the-copilot-agents-library-in-app) | [✅ Custom telemetry (Code App)](#5-downloads-via-the-copilot-agents-library-in-app) |
+| 6 | Sideloaded app installs | [✅ M365/Teams Admin (Justin dashboard)](#6-by-app-ids-for-sideloaded-apps) | ❌ N/A |
+| 7 | MCS publisher installs | ❌ N/A | [✅ CRMAnalytics Kusto](#7-by-publisher-for-mcs-agents) |
+| 8 | Agent Library app installs | ❌ N/A | [✅ CRMAnalytics Kusto + AppSource](#8-installs-of-the-copilot-agents-library-the-app-itself) |
+| 9 | Individual agent installs | ❌ N/A (sideload = per-app tracking) | [✅ CRMAnalytics Kusto (two-layer)](#9-installs-of-individual-agents-via-the-copilot-agents-library) |
+| 10 | CSK installs | ❌ N/A | [✅ CRMAnalytics Kusto](#10-installs-via-the-copilot-studio-kit) |
 
 ---
 
@@ -65,11 +65,13 @@ $env:GITHUB_TOKEN = (gh auth token)
 | Field | Value |
 |-------|-------|
 | **Source** | GitHub Releases API |
-| **Applies to** | DA only |
+| **Applies to** | DA + CA (both template types live in the same repo) |
 | **API** | `GET /repos/microsoft/m365-agent-templates/releases` |
 | **What you get** | Per-release, per-asset `download_count` — break down by agent (tag) and by file |
 | **Retention** | Cumulative (all-time) ✅ |
 | **Auth** | PAT with `repo` scope or `gh auth token` with push access |
+
+> **⚠️ STATUS: No releases exist yet (0 releases as of Apr 2026).** All template .zips currently live in the repo tree, which means **downloads are NOT being tracked**. Releases must be created and all download links re-routed before this data source is active.
 
 > **Critical:** Only Release assets have download counters. Files in the repo tree (.zip in a folder) are NOT tracked. All download links (aka.ms, README, SharePoint, field decks) must route to Release asset URLs or counts are invisible.
 
@@ -78,22 +80,33 @@ $env:GITHUB_TOKEN = (gh auth token)
 https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filename}
 ```
 
-**Release tags per template:**
+**Files to track per template (current repo tree paths → must become Release assets):**
 
-| Template | Release Tag |
-|----------|-------------|
-| Daily Planner | `daily-planner-v1.0.0` |
-| Customer Researcher | `customer-researcher-v1.0.0` |
-| Executive Insights | `executive-insights-v1.0.0` |
-| Company Policy Q&A | `company-policy-qa-v1.0.0` |
-| Request Tracker | `request-tracker-v1.0.0` |
+| Template | Type | Repo Tree Path (current, NOT tracked) | .zip Filename | Planned Release Tag |
+|----------|------|---------------------------------------|---------------|---------------------|
+| Plan My Day | DA | `/Plan My Day/PlanMyDay_v1.0.0.0.zip` | `PlanMyDay_v1.0.0.0.zip` (36 KB) | `plan-my-day-v1.0.0` |
+| My Company Policy | DA | `/My Company Policy/MyCompanyPolicy_1_0_0_0.zip` | `MyCompanyPolicy_1_0_0_0.zip` (80 KB) | `my-company-policy-v1.0.0` |
+| Executive Briefing | DA | `/Executive Briefing/ExecutiveBriefingAgent_v1.0.0.0.zip` | `ExecutiveBriefingAgent_v1.0.0.0.zip` (36 KB) | `executive-briefing-v1.0.0` |
+| Request Tracker | CA | `/Request Tracker/RequestTrackerAgent_1_0_0_0.zip` | `RequestTrackerAgent_1_0_0_0.zip` (211 KB) | `request-tracker-v1.0.0` |
+| Know My Customer | CA | `/Know My Customer/KnowMyCustomer_1_0_0_1.zip` | `KnowMyCustomer_1_0_0_1.zip` (126 KB) | `know-my-customer-v1.0.0` |
+
+**Additional trackable files per template:**
+
+| File Type | Example Path | Useful For |
+|-----------|-------------|------------|
+| Setup Guide PDF | `/Plan My Day/Plan My Day Agent - Setup Guide.pdf` | Measures intent to deploy |
+| Overview Deck PPTX | `/Plan My Day/Plan My Day Agent - Overview Deck.pptx` | Measures field/sales interest |
+| Eval Test Plan PDF | `/Plan My Day/Plan My Day Agent - Evaluation Test Plan.pdf` | Measures serious evaluators |
+| Word Template | `/Know My Customer/Know My Customer Agent - Word Template.docx` | Measures active customizers |
+
+> **Action needed:** Create GitHub Releases with `gh release create`, attach all .zips as assets, and re-point all aka.ms / README / SharePoint links to Release asset URLs.
 
 #### 2. GitHub Repo — Traffic (Whole Repo Only)
 
 | Field | Value |
 |-------|-------|
 | **Source** | GitHub Traffic API |
-| **Applies to** | DA only (repo = `microsoft/m365-agent-templates`) |
+| **Applies to** | DA + CA (repo = `microsoft/m365-agent-templates`, traffic is repo-wide covering all templates) |
 | **Retention** | ⚠️ Rolling 14-day window — must collect weekly to preserve history |
 | **Auth** | Requires **push access** to the repo (read-only tokens get 403) |
 
@@ -105,6 +118,19 @@ https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filen
 | `GET /repos/{owner}/{repo}/traffic/clones` | Daily clones + unique cloners |
 | `GET /repos/{owner}/{repo}/traffic/popular/paths` | Top 10 most-viewed paths |
 | `GET /repos/{owner}/{repo}/traffic/popular/referrers` | Top referral sources |
+
+**Expected popular paths (per-template breakdown):**
+
+The popular paths endpoint returns the top 10 viewed pages. Template-specific paths to watch:
+
+| Path | Template |
+|------|----------|
+| `/microsoft/m365-agent-templates` | Repo landing page (all) |
+| `/microsoft/m365-agent-templates/tree/main/Plan%20My%20Day` | Plan My Day (DA) |
+| `/microsoft/m365-agent-templates/tree/main/My%20Company%20Policy` | My Company Policy (DA) |
+| `/microsoft/m365-agent-templates/tree/main/Executive%20Briefing` | Executive Briefing (DA) |
+| `/microsoft/m365-agent-templates/tree/main/Request%20Tracker` | Request Tracker (CA) |
+| `/microsoft/m365-agent-templates/tree/main/Know%20My%20Customer` | Know My Customer (CA) |
 
 **Clone caveats:**
 - "Download ZIP" (green Code button) counts as a clone, not a tracked download
@@ -135,6 +161,8 @@ https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filen
 | **Status** | Preview (flight-gated) |
 
 AppSource provides its own analytics dashboard for publishers. This tracks the Agent Library *app itself*, not individual templates within it.
+
+**Plugin/referrer attribution (TBD):** If the Agent Library Code App opens the AppSource URL (e.g., via a button or iframe), AppSource analytics *may* capture the referrer URL — but this depends on whether the request is a browser-initiated navigation (referrer visible) vs. a server-side/API call (referrer not visible). Code Apps run in a Managed Host iframe which may further strip referrer headers. **Action:** Test whether AppSource publisher analytics shows referrer breakdown, and whether requests originating from the Code App are distinguishable from organic marketplace traffic.
 
 #### 4. Clicks via TCT (HPA Templates Site)
 
