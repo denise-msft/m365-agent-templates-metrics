@@ -101,6 +101,148 @@ https://github.com/microsoft/m365-agent-templates/releases/download/{tag}/{filen
 
 > **Action needed:** Create GitHub Releases with `gh release create`, attach all .zips as assets, and re-point all aka.ms / README / SharePoint links to Release asset URLs.
 
+##### 🛠️ Setting Up Download Tracking — Step by Step
+
+This is the one-time setup to activate download tracking, plus the repeatable process for each new version. Once set up, all downstream links (aka.ms, github.io page, TCT, marketplace, Agent Library app) point to the release asset and counts accrue automatically.
+
+**Prerequisites:**
+- `gh` CLI installed and authenticated with push access to `microsoft/m365-agent-templates`
+- The .zip files for each template already built and ready to upload
+
+**Step 1 — Create the initial releases (one-time)**
+
+Run once per template. This creates a tagged release and uploads the .zip as a release asset:
+
+```powershell
+# Authenticate (need push access to the repo)
+gh auth switch --user <your-github-username>
+
+cd <local-clone-of-m365-agent-templates>
+
+# Plan My Day (DA)
+gh release create plan-my-day-v1.0.0 `
+  "Plan My Day/PlanMyDay_v1.0.0.0.zip" `
+  --title "Plan My Day v1.0.0" `
+  --notes "Plan My Day declarative agent template — initial release." `
+  --repo microsoft/m365-agent-templates
+
+# My Company Policy (DA)
+gh release create my-company-policy-v1.0.0 `
+  "My Company Policy/MyCompanyPolicy_1_0_0_0.zip" `
+  --title "My Company Policy v1.0.0" `
+  --notes "My Company Policy declarative agent template — initial release." `
+  --repo microsoft/m365-agent-templates
+
+# Executive Briefing (DA)
+gh release create executive-briefing-v1.0.0 `
+  "Executive Briefing/ExecutiveBriefingAgent_v1.0.0.0.zip" `
+  --title "Executive Briefing v1.0.0" `
+  --notes "Executive Briefing declarative agent template — initial release." `
+  --repo microsoft/m365-agent-templates
+
+# Request Tracker (CA)
+gh release create request-tracker-v1.0.0 `
+  "Request Tracker/RequestTrackerAgent_1_0_0_0.zip" `
+  --title "Request Tracker v1.0.0" `
+  --notes "Request Tracker Copilot Studio agent template — initial release." `
+  --repo microsoft/m365-agent-templates
+
+# Know My Customer (CA)
+gh release create know-my-customer-v1.0.0 `
+  "Know My Customer/KnowMyCustomer_1_0_0_1.zip" `
+  --title "Know My Customer v1.0.0" `
+  --notes "Know My Customer Copilot Studio agent template — initial release." `
+  --repo microsoft/m365-agent-templates
+```
+
+**Step 2 — Verify the release assets exist and are downloadable**
+
+```powershell
+# List all releases with download counts
+gh release list --repo microsoft/m365-agent-templates
+
+# Check a specific release's assets
+gh release view plan-my-day-v1.0.0 --repo microsoft/m365-agent-templates
+```
+
+Each asset gets a permanent download URL:
+```
+https://github.com/microsoft/m365-agent-templates/releases/download/plan-my-day-v1.0.0/PlanMyDay_v1.0.0.0.zip
+```
+
+**Step 3 — Point aka.ms links to the release asset URLs (one-time, update on new releases)**
+
+These are the final download URLs that all surfaces should link to. Use aka.ms redirects so you can update the target when a new version ships without changing any downstream links.
+
+| Template | aka.ms Slug | Target Release Asset URL |
+|----------|-------------|--------------------------|
+| Plan My Day | `cskagentlib/da/planmyday` | `https://github.com/microsoft/m365-agent-templates/releases/download/plan-my-day-v1.0.0/PlanMyDay_v1.0.0.0.zip` |
+| My Company Policy | `cskagentlib/da/mycompanypolicy` | `https://github.com/microsoft/m365-agent-templates/releases/download/my-company-policy-v1.0.0/MyCompanyPolicy_1_0_0_0.zip` |
+| Executive Briefing | `cskagentlib/da/executivebriefing` | `https://github.com/microsoft/m365-agent-templates/releases/download/executive-briefing-v1.0.0/ExecutiveBriefingAgent_v1.0.0.0.zip` |
+| Request Tracker | `cskagentlib/request-tracker` | `https://github.com/microsoft/m365-agent-templates/releases/download/request-tracker-v1.0.0/RequestTrackerAgent_1_0_0_0.zip` |
+| Know My Customer | `cskagentlib/know-my-customer` | `https://github.com/microsoft/m365-agent-templates/releases/download/know-my-customer-v1.0.0/KnowMyCustomer_1_0_0_1.zip` |
+
+**Step 4 — Verify all downstream surfaces point to aka.ms (not repo tree blobs)**
+
+Every surface that links to a template download must go through the aka.ms → release asset chain:
+
+| Surface | ✅ Link To | ❌ Don't Link To |
+|---------|-----------|-----------------|
+| github.io landing page | `aka.ms/cskagentlib/da/planmyday` | Raw blob URL or repo tree link |
+| TCT deep links | `aka.ms/cskagentlib/da/planmyday` | Direct file in repo tree |
+| Agent Library Code App | `aka.ms/cskagentlib/da/planmyday` | Dataverse blob or SPO copy |
+| README.md in repo | `aka.ms/cskagentlib/da/planmyday` | Relative path to .zip in tree |
+| SharePoint / field decks | `aka.ms/cskagentlib/da/planmyday` | .zip attached to email or SPO lib |
+| Marketplace listing | `aka.ms/cskagentlib/da/planmyday` | Any non-release URL |
+
+**Step 5 — Check download counts (the payoff)**
+
+```powershell
+# Quick count per release
+$headers = @{
+    Authorization = "Bearer $env:GITHUB_TOKEN"
+    Accept = "application/vnd.github+json"
+    "X-GitHub-Api-Version" = "2022-11-28"
+}
+Invoke-RestMethod "https://api.github.com/repos/microsoft/m365-agent-templates/releases" -Headers $headers |
+  ForEach-Object {
+    $total = ($_.assets | Measure-Object download_count -Sum).Sum
+    "$($_.tag_name): $total downloads"
+  }
+
+# Detailed per-asset breakdown
+Invoke-RestMethod "https://api.github.com/repos/microsoft/m365-agent-templates/releases" -Headers $headers |
+  ForEach-Object {
+    $tag = $_.tag_name
+    $_.assets | ForEach-Object {
+      "$tag | $($_.name) | $($_.download_count) downloads"
+    }
+  }
+```
+
+This is also what the `m365-agent-templates-metrics.ps1` CLI dashboard and `dashboard.html` use — once releases exist, they'll automatically appear in those tools.
+
+##### 🔄 Releasing a New Version (Repeatable Process)
+
+When a template gets an update (e.g., Plan My Day v1.1.0):
+
+```powershell
+# 1. Create the new release with the updated .zip
+gh release create plan-my-day-v1.1.0 `
+  "Plan My Day/PlanMyDay_v1.1.0.0.zip" `
+  --title "Plan My Day v1.1.0" `
+  --notes "What changed in this release." `
+  --repo microsoft/m365-agent-templates
+
+# 2. Update the aka.ms redirect to point to the new release asset URL
+#    → https://github.com/microsoft/m365-agent-templates/releases/download/plan-my-day-v1.1.0/PlanMyDay_v1.1.0.0.zip
+#    (update at https://aka.ms/manage — no downstream link changes needed)
+
+# 3. Old release download counts are preserved — total = sum across all versions
+```
+
+**Why this works:** All downstream surfaces (github.io, TCT, marketplace, Agent Library, README, field decks) point to the aka.ms link, which you redirect to the latest release. No one has to update their bookmarks, decks, or app code. Download counts for old versions are preserved forever, and the new version starts accumulating immediately.
+
 #### 2. GitHub Repo — Traffic (Whole Repo Only)
 
 | Field | Value |
