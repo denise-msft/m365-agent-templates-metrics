@@ -1,5 +1,8 @@
 # 📊 m365-agent-templates Metrics Toolkit
 
+## Loop for notes
+https://loop.cloud.microsoft/p/eyJ1IjoiaHR0cHM6Ly9taWNyb3NvZnQtbXkuc2hhcmVwb2ludC1kZi5jb20vcGVyc29uYWwvZGVtb3JhX21pY3Jvc29mdF9jb20%2FbmF2PWN6MGxNa1p3WlhKemIyNWhiQ1V5Um1SbGJXOXlZVjl0YVdOeWIzTnZablJmWTI5dEptUTlZaUY2ZDJSTlJXTkJZalpyVjBFMVpVZ3dZVkF6VlVsMGRqWlhObXR2YTNOT1IyaHlWbEZLVUZBM2MxY3RjbXhNT0hwTVExcFNVWEpxT0VkeFkwaGFXRE5uSm1ZOU1ERlFRMVF6V1U4MlNUWlhXVE5NTmtwUVFWWkRXa2RSTkZST01rTkZNalV6V2laalBTVXlSaVptYkhWcFpEMHhKbUU5VkdWaGJYTW1jRDBsTkRCbWJIVnBaSGdsTWtac2IyOXdMWEJoWjJVdFkyOXVkR0ZwYm1WeSJ9
+
 Telemetry tracking toolkit for [microsoft/m365-agent-templates](https://github.com/microsoft/m365-agent-templates) — the open-source home for M365 Copilot and Copilot Studio agent templates.
 
 Covers the full telemetry picture across **Declarative Agents (DA)** distributed via GitHub and **Copilot Studio Agents (CA)** distributed via AppSource / Power Platform solutions.
