@@ -1,0 +1,595 @@
+{
+  "schema_version": 72,
+  "title": "M365 Agent Templates - GitHub + Install Telemetry",
+  "autoRefresh": {
+    "enabled": true,
+    "defaultInterval": "1h",
+    "minInterval": "5m"
+  },
+  "parameters": [],
+  "baseQueries": [],
+  "dataSources": [
+    {
+      "id": "ce3f0d68-b514-4e74-b5f7-5a3493439b87",
+      "name": "GitHubTelemetry",
+      "clusterUri": "https://mcscatkustocluster.westus.kusto.windows.net",
+      "database": "GitHubTelemetry",
+      "kind": "manual-kusto"
+    },
+    {
+      "id": "be659833-74ea-46d1-96a4-c93535c75ed0",
+      "name": "CRMAnalytics",
+      "clusterUri": "https://fdislandswebusby2.westus.kusto.windows.net",
+      "database": "CRMAnalytics",
+      "kind": "manual-kusto"
+    }
+  ],
+  "pages": [
+    {
+      "name": "Overview",
+      "id": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037"
+    },
+    {
+      "name": "GitHub Traffic",
+      "id": "6c7a1968-c5e7-473f-b762-58b537e56347"
+    },
+    {
+      "name": "Popular Content & Referrers",
+      "id": "d0596659-e114-494b-b572-d65d762b53b0"
+    },
+    {
+      "name": "CRM Installs",
+      "id": "f2409d65-e3e6-4c93-bf39-17ba3072245a"
+    }
+  ],
+  "queries": [
+    {
+      "id": "0c1b5fc8-7a0a-4e87-b39f-4f8567e5d8ad",
+      "text": "GitHubRepoStats | summarize TotalViews=max(TotalViews14d)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "10bf462f-3b83-44c7-8a79-fb3910a3ce69",
+      "text": "GitHubRepoStats | summarize UniqueVisitors=max(UniqueVisitors14d)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "1974f64c-e51e-4d41-b080-9f1c143a04c1",
+      "text": "GitHubRepoStats | summarize TotalClones=max(TotalClones14d)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "b0a47ea8-55d5-429c-80e7-73249973a49c",
+      "text": "GitHubRepoStats | summarize UniqueCloners=max(UniqueCloners14d)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "32aadb73-68df-4436-a7ca-2cbe67e19ad6",
+      "text": "GitHubRepoStats | summarize Stars=max(Stars)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "c3cb5932-ffc8-4d24-8ca3-2f40a2210345",
+      "text": "GitHubRepoStats | summarize Forks=max(Forks)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "73243835-3fd4-4af9-84d0-78e64a6b3eac",
+      "text": "GitHubTrafficDaily | order by Date asc | project Date, Views, Clones",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "3911e1fb-2504-4e00-9dca-a0fdacdc4120",
+      "text": "GitHubReferrers | order by Views desc | project Referrer, Views, UniqueVisitors",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "044f3924-24e1-4178-a686-78e6a60f5911",
+      "text": "GitHubPopularContent | extend TemplateName = case(     Path has '/Plan My Day', '\ud83d\udcc5 Plan My Day',     Path has '/Executive Briefing', '\ud83d\udcca Executive Briefing',     Path has '/Know My Customer', '\ud83d\udd0d Know My Customer',     Path has '/My Company Policy', '\ud83d\udccb My Company Policy',     Path has '/Request Tracker', '\ud83d\udcdd Request Tracker',     Path == ' ' or Path == '', '\ud83c\udfe0 Repo Home',     Path has '/tree/main' and not(Path has '/'), '\ud83d\udcc2 Root /tree/main',     strcat('\ud83d\udcc4 ', Path)) | summarize Views=sum(Views), UniqueVisitors=sum(UniqueVisitors) by TemplateName | order by Views desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "34515bef-85fe-4427-823c-6d39ecdb2e65",
+      "text": "GitHubPopularContent | order by Views desc | project Path, Views, UniqueVisitors",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "9d4f3cc5-e126-4dcd-bb3f-ffa6af98ea7e",
+      "text": "GitHubTrafficDaily | order by Date asc | project Date, Views, UniqueVisitors",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "7ea2cfe0-9bbf-4e3a-bd26-c6e9833ce22b",
+      "text": "GitHubTrafficDaily | order by Date asc | project Date, Clones, UniqueCloners",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "5950e85f-33ae-496e-b936-256114459e50",
+      "text": "GitHubTrafficDaily | order by Date desc | project Date, Views, UniqueVisitors, Clones, UniqueCloners",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "afef5780-0b2b-40b3-93e4-87534153dcf1",
+      "text": "GitHubPopularContent | extend TemplateName = case(     Path has '/Plan My Day', '\ud83d\udcc5 Plan My Day',     Path has '/Executive Briefing', '\ud83d\udcca Executive Briefing',     Path has '/Know My Customer', '\ud83d\udd0d Know My Customer',     Path has '/My Company Policy', '\ud83d\udccb My Company Policy',     Path has '/Request Tracker', '\ud83d\udcdd Request Tracker',     Path == ' ' or Path == '', '\ud83c\udfe0 Repo Home',     strcat('\ud83d\udcc4 ', Path)) | summarize Views=sum(Views), UniqueVisitors=sum(UniqueVisitors) by TemplateName | order by Views desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "fc46ec27-27d8-4de8-9450-b95d18eec572",
+      "text": "GitHubReferrers | order by Views desc | project Referrer, Views, UniqueVisitors",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "d3106ca7-1ed5-4c77-8f88-aea8ff2116ed",
+      "text": "GitHubPopularContent | extend TemplateName = case(     Path has '/Plan My Day', '\ud83d\udcc5 Plan My Day',     Path has '/Executive Briefing', '\ud83d\udcca Executive Briefing',     Path has '/Know My Customer', '\ud83d\udd0d Know My Customer',     Path has '/My Company Policy', '\ud83d\udccb My Company Policy',     Path has '/Request Tracker', '\ud83d\udcdd Request Tracker',     Path == ' ' or Path == '', '\ud83c\udfe0 Repo Home',     strcat('\ud83d\udcc4 ', Path)) | project TemplateName, Path, Views, UniqueVisitors | order by Views desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "e9a486e1-07a9-408b-abee-82b94211d02a",
+      "text": "GitHubReferrers | order by Views desc | project Referrer, Views, UniqueVisitors",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "ce3f0d68-b514-4e74-b5f7-5a3493439b87"
+      }
+    },
+    {
+      "id": "16e38b5d-f74f-48ca-ba61-c2bb36ad5366",
+      "text": "let _OrgSolutions = OrgSolutionsInstalled | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled; let _OrgDetails = OrganizationDetails | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrganizationDetails; let _TenantNames = cluster('powerautomatefunbipme.eastus2.kusto.windows.net').database('SelfServiceData').dimTenant | where IsTestTenant == 0 | project TenantId, TenantName; _OrgSolutions | where PublisherUniqueName == 'PowerCat' | where SolutionUniqueName startswith 'AgentLib_' | where Geo !in ('TST', 'TIP1', 'TIP2') | summarize InstallCount=dcount(OrganizationId)",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "be659833-74ea-46d1-96a4-c93535c75ed0"
+      }
+    },
+    {
+      "id": "433c738d-5b65-4a0d-8513-36f6441a8481",
+      "text": "let _OrgSolutions = OrgSolutionsInstalled | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled; let _OrgDetails = OrganizationDetails | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrganizationDetails; let _TenantNames = cluster('powerautomatefunbipme.eastus2.kusto.windows.net').database('SelfServiceData').dimTenant | where IsTestTenant == 0 | project TenantId, TenantName; _OrgSolutions | where PublisherUniqueName == 'PowerCat' | where SolutionUniqueName startswith 'AgentLib_' | where Geo !in ('TST', 'TIP1', 'TIP2') | summarize Installs=dcount(OrganizationId) by SolutionUniqueName | order by Installs desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "be659833-74ea-46d1-96a4-c93535c75ed0"
+      }
+    },
+    {
+      "id": "deac5daf-2f77-49d7-b96e-758d587f922f",
+      "text": "let _OrgSolutions = OrgSolutionsInstalled | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled; let _OrgDetails = OrganizationDetails | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrganizationDetails; let _TenantNames = cluster('powerautomatefunbipme.eastus2.kusto.windows.net').database('SelfServiceData').dimTenant | where IsTestTenant == 0 | project TenantId, TenantName; _OrgSolutions | where PublisherUniqueName == 'PowerCat' | where SolutionUniqueName startswith 'AgentLib_' | where Geo !in ('TST', 'TIP1', 'TIP2') | join kind=leftouter (_OrgDetails | project OrganizationId=Id, Geo) on OrganizationId | summarize Installs=dcount(OrganizationId) by Geo1 | order by Installs desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "be659833-74ea-46d1-96a4-c93535c75ed0"
+      }
+    },
+    {
+      "id": "556f6da5-63a7-4901-ac93-a3b5875b482c",
+      "text": "let _OrgSolutions = OrgSolutionsInstalled | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrgSolutionsInstalled; let _OrgDetails = OrganizationDetails | union cluster('fdislandswebeuams.westeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebeudb3.northeurope.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebausyd.australiaeast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebjptyo.japaneast.kusto.windows.net').database('CRMAnalytics').OrganizationDetails | union cluster('fdislandswebcayto.canadacentral.kusto.windows.net').database('CRMAnalytics').OrganizationDetails; let _TenantNames = cluster('powerautomatefunbipme.eastus2.kusto.windows.net').database('SelfServiceData').dimTenant | where IsTestTenant == 0 | project TenantId, TenantName; _OrgSolutions | where PublisherUniqueName == 'PowerCat' | where SolutionUniqueName startswith 'AgentLib_' | where Geo !in ('TST', 'TIP1', 'TIP2') | join kind=leftouter (_OrgDetails | project OrganizationId=Id, FriendlyName, DomainName, TenantId, Geo, CountryCode, UserCount) on OrganizationId | join kind=leftouter _TenantNames on TenantId | project SolutionUniqueName, SolutionVersion, TenantName, FriendlyName, DomainName, Geo, CountryCode, UserCount, InstalledOn | order by InstalledOn desc",
+      "usedVariables": [],
+      "dataSource": {
+        "kind": "inline",
+        "dataSourceId": "be659833-74ea-46d1-96a4-c93535c75ed0"
+      }
+    }
+  ],
+  "tiles": [
+    {
+      "id": "2556213a-918a-44db-b501-2ce1fc4f1cc9",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "0c1b5fc8-7a0a-4e87-b39f-4f8567e5d8ad"
+      },
+      "title": "Total Views (14d)",
+      "visualType": "card",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "87074fa2-f8fa-4fbc-a8eb-eec267b89d5b",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "10bf462f-3b83-44c7-8a79-fb3910a3ce69"
+      },
+      "title": "Unique Visitors (14d)",
+      "visualType": "card",
+      "layout": {
+        "x": 4,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "d990e61f-254f-4e8d-a567-41dacd7bb030",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "1974f64c-e51e-4d41-b080-9f1c143a04c1"
+      },
+      "title": "Total Clones (14d)",
+      "visualType": "card",
+      "layout": {
+        "x": 8,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "6d680ca2-0dc3-44d2-8204-54298ba4183d",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "b0a47ea8-55d5-429c-80e7-73249973a49c"
+      },
+      "title": "Unique Cloners (14d)",
+      "visualType": "card",
+      "layout": {
+        "x": 12,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "950fd09e-c16a-4112-a6dd-04471f97f5d1",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "32aadb73-68df-4436-a7ca-2cbe67e19ad6"
+      },
+      "title": "Stars",
+      "visualType": "card",
+      "layout": {
+        "x": 16,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "8d910c8e-b4d3-457f-9080-9567170e1fe5",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "c3cb5932-ffc8-4d24-8ca3-2f40a2210345"
+      },
+      "title": "Forks",
+      "visualType": "card",
+      "layout": {
+        "x": 20,
+        "y": 0,
+        "width": 4,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "e8e5a914-b037-4d29-aca1-ed8158847855",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "73243835-3fd4-4af9-84d0-78e64a6b3eac"
+      },
+      "title": "Daily Views & Clones",
+      "visualType": "line",
+      "layout": {
+        "x": 0,
+        "y": 4,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "01a7ce3d-8872-4bf7-9d36-7f853161afa3",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "3911e1fb-2504-4e00-9dca-a0fdacdc4120"
+      },
+      "title": "Top Referrers",
+      "visualType": "bar",
+      "layout": {
+        "x": 12,
+        "y": 4,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "f2bf8c7b-265d-4ddd-830c-8139f9955403",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "044f3924-24e1-4178-a686-78e6a60f5911"
+      },
+      "title": "Views by Agent Template",
+      "visualType": "bar",
+      "layout": {
+        "x": 0,
+        "y": 12,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "53c79b95-f005-4e8c-bbc1-4fdc928dbf7b",
+      "pageId": "71aa5be8-26ef-4d98-b0f9-5ff2ad29f037",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "34515bef-85fe-4427-823c-6d39ecdb2e65"
+      },
+      "title": "All Popular Paths (Raw)",
+      "visualType": "table",
+      "layout": {
+        "x": 12,
+        "y": 12,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "1fcd90b0-6469-40ae-8e25-cf951e65b7b4",
+      "pageId": "6c7a1968-c5e7-473f-b762-58b537e56347",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "9d4f3cc5-e126-4dcd-bb3f-ffa6af98ea7e"
+      },
+      "title": "Daily Page Views",
+      "visualType": "area",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "7e44f9d0-e66e-43a3-af77-2cecbb974cf9",
+      "pageId": "6c7a1968-c5e7-473f-b762-58b537e56347",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "7ea2cfe0-9bbf-4e3a-bd26-c6e9833ce22b"
+      },
+      "title": "Daily Clones",
+      "visualType": "area",
+      "layout": {
+        "x": 12,
+        "y": 0,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "f059376a-7f56-4629-8410-e31227109c26",
+      "pageId": "6c7a1968-c5e7-473f-b762-58b537e56347",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "5950e85f-33ae-496e-b936-256114459e50"
+      },
+      "title": "Daily Detail",
+      "visualType": "table",
+      "layout": {
+        "x": 0,
+        "y": 8,
+        "width": 24,
+        "height": 7
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "8daceb52-a32c-4155-b704-1f6f84b3d0f7",
+      "pageId": "d0596659-e114-494b-b572-d65d762b53b0",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "afef5780-0b2b-40b3-93e4-87534153dcf1"
+      },
+      "title": "Views by Agent Template",
+      "visualType": "bar",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "501f4754-c02b-456f-a497-e01a04a98361",
+      "pageId": "d0596659-e114-494b-b572-d65d762b53b0",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "fc46ec27-27d8-4de8-9450-b95d18eec572"
+      },
+      "title": "Traffic Sources",
+      "visualType": "bar",
+      "layout": {
+        "x": 12,
+        "y": 0,
+        "width": 12,
+        "height": 8
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "6e7170e8-076e-45c7-af59-73e8e18e5c28",
+      "pageId": "d0596659-e114-494b-b572-d65d762b53b0",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "d3106ca7-1ed5-4c77-8f88-aea8ff2116ed"
+      },
+      "title": "Content Detail",
+      "visualType": "table",
+      "layout": {
+        "x": 0,
+        "y": 8,
+        "width": 12,
+        "height": 7
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "5efb39b5-042b-4020-8e12-5eb5e1d84aac",
+      "pageId": "d0596659-e114-494b-b572-d65d762b53b0",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "e9a486e1-07a9-408b-abee-82b94211d02a"
+      },
+      "title": "Referrer Detail",
+      "visualType": "table",
+      "layout": {
+        "x": 12,
+        "y": 8,
+        "width": 12,
+        "height": 7
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "9fe8e8bc-1411-482a-a5e7-e1ee5fe78e8f",
+      "pageId": "f2409d65-e3e6-4c93-bf39-17ba3072245a",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "16e38b5d-f74f-48ca-ba61-c2bb36ad5366"
+      },
+      "title": "Agent Template Installs (Unique Orgs)",
+      "visualType": "card",
+      "layout": {
+        "x": 0,
+        "y": 0,
+        "width": 6,
+        "height": 4
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "b4e8ee65-5391-4901-b4bd-f4bf66ed3fc1",
+      "pageId": "f2409d65-e3e6-4c93-bf39-17ba3072245a",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "433c738d-5b65-4a0d-8513-36f6441a8481"
+      },
+      "title": "Installs by Template",
+      "visualType": "bar",
+      "layout": {
+        "x": 6,
+        "y": 0,
+        "width": 9,
+        "height": 6
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "0511f36b-06bd-49ca-87a7-fbdc91f42c3f",
+      "pageId": "f2409d65-e3e6-4c93-bf39-17ba3072245a",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "deac5daf-2f77-49d7-b96e-758d587f922f"
+      },
+      "title": "Installs by Geo",
+      "visualType": "pie",
+      "layout": {
+        "x": 15,
+        "y": 0,
+        "width": 9,
+        "height": 6
+      },
+      "visualOptions": {}
+    },
+    {
+      "id": "b5a964e0-03da-42e7-ba8c-e4db9723733b",
+      "pageId": "f2409d65-e3e6-4c93-bf39-17ba3072245a",
+      "queryRef": {
+        "kind": "query",
+        "queryId": "556f6da5-63a7-4901-ac93-a3b5875b482c"
+      },
+      "title": "Customer Install List",
+      "visualType": "table",
+      "layout": {
+        "x": 0,
+        "y": 6,
+        "width": 24,
+        "height": 9
+      },
+      "visualOptions": {}
+    }
+  ]
+}
