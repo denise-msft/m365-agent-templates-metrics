@@ -552,7 +552,40 @@ See the [teaching guide](github-telemetry-guide.html) section 10a for the full b
 - GitHub PAT with `repo` scope (traffic endpoints need push access)
 - PowerShell 7+ and `gh` CLI
 - For Fabric notebook: access to "Power CAT Team" workspace
-- For Kusto: BIC-DataAccess-US/EU entitlements + VPN
+- For Kusto: VPN + access entitlements below
+
+## 🔐 Access Requirements
+
+### GitHub Telemetry (mcscatkustocluster)
+
+| Resource | Details |
+|----------|---------|
+| **Cluster** | `https://mcscatkustocluster.westus.kusto.windows.net` |
+| **Database** | `GitHubTelemetry` |
+| **Access** | Request from Denise Moran (demora) — admin on the database |
+| **VPN** | Not required for this cluster |
+
+### CRM Install Telemetry (CRMAnalytics / fdislands clusters)
+
+All 3 entitlements are needed for full global coverage. Request on **CoreIdentity**:
+
+| Entitlement | Clusters | Request Link |
+|-------------|----------|--------------|
+| **BIC-DataAccess-US** | NA (`fdislandswebusby2`) | [Request on CoreIdentity](https://coreidentity.microsoft.com/manage/Entitlement/entitlement/bicdataacces-q312) |
+| **BIC-DataAccess-EU** | EU (`fdislandswebeuams`, `fdislandswebeudb3`) | [Request on CoreIdentity](https://coreidentity.microsoft.com/manage/Entitlement/entitlement/bicdataaccess-eu) |
+| **BIC-DataAccess-ROW** | Rest of World (AUS, JPN, CAN, FR, DE, CH, NO, SE) | [Request on CoreIdentity](https://coreidentity.microsoft.com/manage/Entitlement/entitlement/bicdataaccess-row) |
+
+> ⚠️ **Do NOT request BIC-DataAccess-EU-CSS** — it is deprecated. Use BIC-DataAccess-EU instead.
+
+> ⚠️ **VPN required** — all fdislands clusters require Microsoft corpnet.
+
+### Process/Flow Telemetry (processus)
+
+| Resource | Details |
+|----------|---------|
+| **Cluster** | `processus.kusto.windows.net` |
+| **Database** | `process` |
+| **Access** | Ask Chris Garty (chgarty) — no self-service entitlement known |
 
 ## 👤 Team
 
