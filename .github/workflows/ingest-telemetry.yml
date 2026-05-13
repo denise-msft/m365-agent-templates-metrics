@@ -28,7 +28,7 @@ jobs:
       - name: Run ingest-to-kusto.ps1
         shell: pwsh
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN_METRICS }}
+          GITHUB_TOKEN: ${{ secrets.GH_METRICS_TOKEN }}
         run: ./ingest-to-kusto.ps1
 
       - name: Commit CSV snapshots
