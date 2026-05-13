@@ -83,7 +83,10 @@ Write-Host " $($clones.count) total ($($clones.uniques) unique)"
 # Build clone lookup
 $cloneMap = @{}
 if ($clones.clones) {
-    $clones.clones | ForEach-Object { $cloneMap[$_.timestamp.Substring(0,10)] = $_ }
+    $clones.clones | ForEach-Object {
+        $d = if ($_.timestamp -is [datetime]) { $_.timestamp.ToString("yyyy-MM-dd") } else { $_.timestamp.Substring(0,10) }
+        $cloneMap[$d] = $_
+    }
 }
 
 # Popular content
@@ -106,7 +109,7 @@ Write-Host "`n🚀 Ingesting into Kusto ($Database)..." -ForegroundColor Cyan
 
 # Traffic daily
 $rows = ($views.views | ForEach-Object {
-    $d = $_.timestamp.Substring(0,10)
+    $d = if ($_.timestamp -is [datetime]) { $_.timestamp.ToString("yyyy-MM-dd") } else { $_.timestamp.Substring(0,10) }
     $c = if ($cloneMap[$d]) { $cloneMap[$d].count } else { 0 }
     $cu = if ($cloneMap[$d]) { $cloneMap[$d].uniques } else { 0 }
     "$Today, $d, $($_.count), $($_.uniques), $c, $cu"
@@ -135,10 +138,33 @@ $row = "$Today, $($repoInfo.stargazers_count), $($repoInfo.forks_count), $($repo
 Invoke-KustoMgmt ".ingest inline into table GitHubRepoStats <| `n$row" | Out-Null
 Write-Host "  ✅ GitHubRepoStats: 1 row"
 
+# Release downloads
+Write-Host "  📦 Release downloads..." -NoNewline
+$releases = Invoke-GitHubApi "$BaseUrl/releases"
+$releaseRows = @()
+if ($releases) {
+    foreach ($rel in $releases) {
+        foreach ($asset in $rel.assets) {
+            $sizeMB = [math]::Round($asset.size / 1MB, 2)
+            $published = if ($rel.published_at -is [datetime]) { $rel.published_at.ToString("yyyy-MM-ddTHH:mm:ss") } else { $rel.published_at.Substring(0,19) }
+            $isPre = if ($rel.prerelease) { 1 } else { 0 }
+            $assetName = $asset.name -replace ',', ''
+            $relName = $rel.name -replace ',', ''
+            $releaseRows += "$Today, $($rel.tag_name), $relName, $published, $isPre, $assetName, $($asset.download_count), $sizeMB"
+        }
+    }
+    Write-Host " $($releaseRows.Count) assets across $($releases.Count) releases"
+}
+if ($releaseRows.Count -gt 0) {
+    $rows = $releaseRows -join "`n"
+    Invoke-KustoMgmt ".ingest inline into table GitHubReleaseDownloads <| `n$rows" | Out-Null
+    Write-Host "  ✅ GitHubReleaseDownloads: $($releaseRows.Count) rows"
+}
+
 # --- Also save CSVs for backup ---
 $csvDir = Split-Path $MyInvocation.MyCommand.Path
 $views.views | ForEach-Object {
-    $d = $_.timestamp.Substring(0,10)
+    $d = if ($_.timestamp -is [datetime]) { $_.timestamp.ToString("yyyy-MM-dd") } else { $_.timestamp.Substring(0,10) }
     $c = if ($cloneMap[$d]) { $cloneMap[$d].count } else { 0 }
     $cu = if ($cloneMap[$d]) { $cloneMap[$d].uniques } else { 0 }
     [PSCustomObject]@{ collected_date=$Today; date=$d; views=$_.count; unique_visitors=$_.uniques; clones=$c; unique_cloners=$cu }
@@ -162,4 +188,4 @@ $referrers | ForEach-Object {
 Write-Host "`n🎯 Done! Data is live in Kusto and CSVs updated." -ForegroundColor Green
 Write-Host "   Cluster: $ClusterUri" -ForegroundColor DarkGray
 Write-Host "   Database: $Database" -ForegroundColor DarkGray
-Write-Host "   Tables: GitHubTrafficDaily, GitHubPopularContent, GitHubReferrers, GitHubRepoStats" -ForegroundColor DarkGray
+Write-Host "   Tables: GitHubTrafficDaily, GitHubPopularContent, GitHubReferrers, GitHubRepoStats, GitHubReleaseDownloads" -ForegroundColor DarkGray

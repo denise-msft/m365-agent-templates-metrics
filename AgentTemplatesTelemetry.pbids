@@ -1,0 +1,15 @@
+{
+    "version": "0.1",
+    "connections": [
+        {
+            "details": {
+                "protocol": "azure-kusto",
+                "address": {
+                    "server": "https://mcscatkustocluster.westus.kusto.windows.net",
+                    "database": "GitHubTelemetry"
+                }
+            },
+            "options": {}
+        }
+    ]
+}
